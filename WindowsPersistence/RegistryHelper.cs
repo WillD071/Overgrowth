@@ -1,3 +1,5 @@
+using Microsoft.Win32;
+
 namespace RegistryHelper{
     public class RegistryHelper{
     public static void SetRegistryKey(string keyPath, string keyName, object keyValue, RegistryHive hive = RegistryHive.CurrentUser, RegistryView view = RegistryView.Default)
