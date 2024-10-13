@@ -1,7 +1,17 @@
 ﻿using System.Diagnostics;
 
 //THIS FILE IS TO BE COMPILED SEPERATELY IN DEPLOYMENT
+/*
 
+This secondary watchdog monitors the main watchdog. It verifies if it running. 
+\
+If not running, it verifies the existence of the file then runs it.
+
+if doesnt exist, it takes from another copy of the watchdog, copies it to the orig location, then runs it
+if the secondary location of the primary watchdog gets removed, the secondary watchdog copies it back again
+
+
+*/
 namespace MonitorWatchdog
 {
     public class MonitorWatchdog

