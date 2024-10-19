@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using watchdogHelper;
 
 //THIS FILE IS TO BE COMPILED SEPERATELY IN DEPLOYMENT
 /*

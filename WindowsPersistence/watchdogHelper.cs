@@ -1,7 +1,13 @@
-namespace watchdogHelper{
-    public class watchDogHelper{
+using Newtonsoft.Json.Linq;
+using ServiceStack.Text;
+using System.Diagnostics;
+using System.Reflection;
 
-    static bool IsMutexRunning(string mutexName)
+namespace watchdogHelper{
+    public class watchdogHelper
+    {
+
+    public static bool IsMutexRunning(string mutexName)
     {
         bool isNewInstance;
         
@@ -23,29 +29,11 @@ namespace watchdogHelper{
         }
     }
 
-    static bool IsProcessRunning(string processName)
+    public static bool IsProcessRunning(string processName)
     {
         // Get a list of processes by name
         Process[] processes = Process.GetProcessesByName(processName);
         return processes.Length > 0;
-    }
-
-
-    static void WatchdogLogic()
-    {
-        // Example loop to simulate frequent checks
-        while (true)
-        {
-            
-
-
-
-
-
-
-            Console.WriteLine("Watchdog is monitoring...");
-            Thread.Sleep(10000);  // Sleep for 1 second
-        }
     }
 
     public static void CheckBinary(string destinationPath, string name)
