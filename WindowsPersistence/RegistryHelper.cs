@@ -41,6 +41,7 @@ namespace RegistryHelper{
             return actualValue != null && actualValue.Equals(expectedValue);
         }
     }
+
 }
 }
 

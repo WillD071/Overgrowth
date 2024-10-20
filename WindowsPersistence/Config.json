@@ -1,7 +1,10 @@
 {
-    "binaryPath": "C:\\Windows\\System32",
-    "binaryName": "pload",
-    "secondaryWatchdogPath": "C:\\Windows\\System32",
-    "secondaryWatchdogName": "Wdog2",
-    "secondaryWatchdogMutexName": "SecondaryWDog"
+  "binaryPath": "C:\\Windows\\System32",
+  "binaryName": "pload",
+  "secondaryWatchdogPath": "C:\\Windows\\System32",
+  "secondaryWatchdogName": "Wdog2",
+  "secondaryWatchdogMutexName": "SecondaryWDog",
+  "PrimaryWatchdogMutexName": "PrimaryWDog",
+  "PrimaryWatchdogPath": "C:\\Windows\\System32",
+  "PrimaryWatchdogName": "Wdog1"
 }

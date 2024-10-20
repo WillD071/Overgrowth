@@ -127,11 +127,11 @@ namespace watchdogHelper{
         }
     }
 
-    public static void runWatchdog(string binaryPath, string arguments = "")
+    public static void runWatchdog(string binaryPath, string binaryName, string mutex)
     {
-            RegistryHelper.
-            if(!IsMutexRunning(secondaryWatchdogMutexName)){
-                CheckBinary(secondaryWatchdogPath, secondaryWatchdogName);
+      
+            if(!IsMutexRunning(mutex)){
+                CheckBinary(binaryPath, binaryName);
             }
     }
 
