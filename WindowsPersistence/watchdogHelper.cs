@@ -36,54 +36,54 @@ namespace watchdogHelper{
         return processes.Length > 0;
     }
 
-    public static void CheckBinary(string destinationPath, string name)
-    {
-        string currentDirectory = Directory.GetCurrentDirectory();
-        string sourcePath = Path.Combine(currentDirectory, name);
-        string destPathBinary = Path.Combine(destinationPath, name);
-
-
-        if(File.Exists(destPathBinary) && File.Exists(sourcePath)){
-            return;
-        } 
-        else{
-            CopyBinary(destPathBinary, sourcePath);
-        }
-    }
-
-    public static void CopyBinary(string destPathBinary, string sourcePath){
-        // Check if the .exe exists in the current directory
-        if (File.Exists(sourcePath))
+        public static void verifyFilePathsSourceAndDest(string destinationPath, string filename) //checks for if file exists then copies it if not
         {
-            // Copy the .exe to the destination
-            try
-            {
-                File.Copy(sourcePath, destPathBinary, overwrite: true);
-                Console.WriteLine($"'{binaryName}' found and copied to {destPathBinary}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error copying file: {ex.Message}");
-            }
-        }
-        else if(File.Exists(destPathBinary)){
-            try
-            {
-                File.Copy(destPathBinary, sourcePath, overwrite: false);
-                Console.WriteLine($"'{binaryName}' found and copied to {destPathBinary}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error copying file: {ex.Message}");
-            }
-        }
-        else
-        {
-            Console.WriteLine($"'{binaryName}' not found in the current directory.");
-        }
-    }
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string sourcePathFile = Path.Combine(currentDirectory, filename);
+            string destPathFile = Path.Combine(destinationPath, filename);
 
-    public static void runBinary(string binaryPath, string Mutex, string arguments = "")
+
+            if (File.Exists(destPathFile) && File.Exists(sourcePathFile))
+            {
+                return;
+            }
+            else
+            {
+
+                if (File.Exists(sourcePathFile))
+                {
+                    // Copy the .exe to the destination
+                    try
+                    {
+                        File.Copy(sourcePathFile, destPathFile, overwrite: false);
+                        Console.WriteLine($"'{filename}' found and copied to {destPathFile}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error copying file: {ex.Message}");
+                    }
+                }
+                else if (File.Exists(destPathFile))
+                {
+                    try
+                    {
+                        File.Copy(destPathFile, sourcePathFile, overwrite: false);
+                        Console.WriteLine($"'{filename}' found and copied to {sourcePathFile}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error copying file: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"'{filename}' not found in the current directory.");
+                }
+            }
+        }
+    
+
+    public static void runBinary(string binaryPath, string arguments = "")
     {
         try
         {
@@ -95,7 +95,7 @@ namespace watchdogHelper{
                 UseShellExecute = false,   // Set to true if you want to use the system shell
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                CreateNoWindow = true      // Set to false if you want a window to appear
+                CreateNoWindow = false      // Set to false if you want a window to appear
             };
 
             // Start the process
@@ -127,41 +127,20 @@ namespace watchdogHelper{
         }
     }
 
-    public static void runWatchdog(string binaryPath, string binaryName, string mutex)
+    public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
     {
-      
             if(!IsMutexRunning(mutex)){
-                CheckBinary(binaryPath, binaryName);
+                runBinary(Path.Combine(watchdogPath, watchdogName));
             }
     }
 
-    public static void LoadFromJson(string jsonFilePath, params string[] keysToLoad)
+    public static void CheckAndRunPayload(string payloadPath, string payloadName)
     {
-        try
-        {
-            // Read JSON file content
-            var jsonContent = File.ReadAllText(jsonFilePath);
-            var config = JObject.Parse(jsonContent);
-
-            // Use reflection to get all static properties
-            var properties = typeof(Config)
-                .GetProperties(BindingFlags.Static | BindingFlags.Public)
-                .Where(p => keysToLoad.Contains(p.Name, StringComparer.OrdinalIgnoreCase));
-
-            // Set values for each specified key
-            foreach (var property in properties)
-            {
-                var jsonValue = config[property.Name];
-                if (jsonValue != null && property.CanWrite)
-                {
-                    property.SetValue(null, jsonValue.ToString());
-                }
+            if(!IsProcessRunning(payloadName)){
+                runBinary(Path.Combine(payloadPath, payloadName));
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading config: {ex.Message}");
-        }
     }
+
+    
     }
 }
