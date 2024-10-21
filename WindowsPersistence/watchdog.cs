@@ -3,6 +3,10 @@
 /*
     This watch is constantly monitoring the secondary watchdog and the binary
 
+compile here into exe and put into: C:\Windows\Test
+
+dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true
+
 Watchdog Functionality
     If either of the above watched binaries stop running or existing, this watchdog will copy and/or run them. Will not run anything that is currently running
     If the watched binaries stop existing in the current directory or in the destination directory, then 
