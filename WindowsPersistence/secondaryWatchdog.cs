@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using watchdogHelper;
-
+﻿
 //THIS FILE IS TO BE COMPILED SEPERATELY IN DEPLOYMENT
 /*
 
@@ -17,15 +15,17 @@ namespace MonitorWatchdog
 {
     public class MonitorWatchdog
     {
-        public static string? PrimaryWatchdogPath { get; private set; } = "C:\\Windows\\System32";
-        public static string? PrimaryWatchdogName { get; private set; } = "Wdog1";
-        public static string? PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
+        public static string PrimaryWatchdogPath { get; private set; } = "C:\\Windows\\System32";
+        public static string PrimaryWatchdogName { get; private set; } = "Wdog1";
+        public static string SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
+
+        public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
 
 
 
-        static void Main(string[] args)
+      /* static void Main(string[] args)
         {
-            using (Mutex mutex = new Mutex(false, PrimaryWatchdogMutexName, out bool isNewInstance))
+            using (Mutex mutex = new Mutex(false, SecondaryWatchdogMutexName, out bool isNewInstance))
             {
                 if (!isNewInstance)
                 {
@@ -37,7 +37,8 @@ namespace MonitorWatchdog
                 WatchdogLogic();
             }
         }
-
+      */
+      
 
         static void WatchdogLogic()
         { 

@@ -1,7 +1,4 @@
-using Newtonsoft.Json.Linq;
-using ServiceStack.Text;
 using System.Diagnostics;
-using System.Reflection;
 
 namespace watchdogHelper{
     public class watchdogHelper
@@ -18,7 +15,6 @@ namespace watchdogHelper{
             if (isNewInstance)
             {
                 // Release the mutex so it's not held by this check
-                mutex.ReleaseMutex();
                 return false;
             }
             else
@@ -31,7 +27,9 @@ namespace watchdogHelper{
 
     public static bool IsProcessRunning(string processName)
     {
-        // Get a list of processes by name
+            // Get a list of processes by name
+            processName = processName.Replace(".exe", "");
+
         Process[] processes = Process.GetProcessesByName(processName);
         return processes.Length > 0;
     }
@@ -81,53 +79,44 @@ namespace watchdogHelper{
                 }
             }
         }
-    
 
-    public static void runBinary(string binaryPath, string arguments = "")
-    {
-        try
+
+        public static void runBinary(string filePath, string arguments = "")
         {
-            // Initialize the process start information
+            // Create a new ProcessStartInfo for the executable
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
-                FileName = binaryPath,
-                Arguments = arguments,
-                UseShellExecute = false,   // Set to true if you want to use the system shell
+                FileName = filePath,
+                UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                CreateNoWindow = false      // Set to false if you want a window to appear
+                CreateNoWindow = true,
+                Verb = "runas" // Request elevated privileges
             };
 
-            // Start the process
-            using (Process process = Process.Start(startInfo))
+            // Create a new instance of Process each time
+            using (Process process = new Process())
             {
-                // Capture output if needed
-                string output = process.StandardOutput.ReadToEnd();
-                string errors = process.StandardError.ReadToEnd();
+                process.StartInfo = startInfo;
+                process.Start();
 
-                // Wait for the process to exit
-                process.WaitForExit();
-
-                // Output the results
-                Console.WriteLine("Output:");
-                Console.WriteLine(output);
-
-                if (!string.IsNullOrEmpty(errors))
+                // Optionally, handle output asynchronously if needed
+                process.OutputDataReceived += (sender, e) =>
                 {
-                    Console.WriteLine("Errors:");
-                    Console.WriteLine(errors);
-                }
+                    if (e.Data != null)
+                    {
+                        // Handle output data here
+                        System.Console.WriteLine(e.Data);
+                    }
+                };
+                process.BeginOutputReadLine();
 
-                Console.WriteLine("Process exited with code " + process.ExitCode);
+                // Note: No WaitForExit(), allowing the process to run without blocking
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to run binary: {ex.Message}");
-        }
-    }
 
-    public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
+
+        public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
     {
             if(!IsMutexRunning(mutex)){
                 runBinary(Path.Combine(watchdogPath, watchdogName));
