@@ -6,13 +6,16 @@
 <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
    <SelfContained>true</SelfContained>
+<AssemblyName>Windows Disk Maintenance</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PublishSingleFile>true</PublishSingleFile> 
+    <PublishSingleFile>true</PublishSingleFile>
+<PublishTrimmed>true</PublishTrimmed>  
   </PropertyGroup>
 
 	<ItemGroup>
 		<Compile Include="..\watchdogHelper.cs" />
+		<Compile Include="..\Config.cs" />
 	</ItemGroup>
 
 </Project>

