@@ -2,9 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net8.0-windows</TargetFramework>
+<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+   <SelfContained>true</SelfContained>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PublishSingleFile>true</PublishSingleFile> 
   </PropertyGroup>
+
+	<ItemGroup>
+		<Compile Include="..\watchdogHelper.cs" />
+	</ItemGroup>
 
 </Project>
