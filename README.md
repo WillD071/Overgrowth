@@ -31,7 +31,7 @@ Once the user restarts, the watchdog no longer runs as a superuser but continues
 
 **1 - Add correct files:** Place Primary Watchdog (defaults to "Windows Service Manager.exe"), Secondary Watchdog (Defaults to "Windows Disk Manager.exe"), and payload (Defaults to testPayload.exe) in **C:\CoreSystem\Temp**
 
-**2 - Run as Administrator:** Run the Primary Watchdog (defaults to "Windows Service Manager.exe"). Assuming you set up Config.cs correctly, the payload should be running indefinitely
+**2 - Run as Administrator:** Run the Primary Watchdog (defaults to "Windows Service Manager.exe") **as adminstrator**. Assuming you set up Config.cs correctly, the payload should be running indefinitely
 
 
 
