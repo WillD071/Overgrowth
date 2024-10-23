@@ -48,7 +48,7 @@ namespace watchdogHelper
             {
                 // Create the directory if it doesn't exist
                 Directory.CreateDirectory(destinationPath);
-                Console.WriteLine($"Directory created: {directoryPath}");
+                Console.WriteLine($"Directory created: {destinationPath}");
             }
 
 

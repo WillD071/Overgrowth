@@ -16,3 +16,5 @@ Copy-Item -Path (Get-ChildItem "..\WindowsPersistence\SecondaryWatchdog\bin\Rele
 
 Copy-Item -Path (Get-ChildItem "..\WindowsPersistence\PrimaryWatchdog\bin\Release\net8.0-windows\win-x64\publish\*.exe" | Select-Object -First 1).FullName -Destination "..\WindowsPersistence\Testing" -Force
  
+
+Read-Host -Prompt "Press Enter to exit"
