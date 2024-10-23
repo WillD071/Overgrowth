@@ -139,14 +139,13 @@ namespace watchdogHelper
             }
         }
 
-        public static void EnsureDirectoryExists(string filePath)
+        public static void EnsureDirectoryExists(string dirPath)
         {
             try
             {
-                string directory = Path.GetDirectoryName(filePath);
-                if (!Directory.Exists(directory))
+                if (!Directory.Exists(dirPath))
                 {
-                    Directory.CreateDirectory(directory);
+                    Directory.CreateDirectory(dirPath);
                 }
             }
             catch (Exception ex)
