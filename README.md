@@ -1,6 +1,6 @@
 # WindowsPersistence
 
-This project combines many Windows persistence techniques and aims to make it impossible for the user to prevent the binary from running. It is intended for use in cybersecurity competitions where root access is held. It is currently a work in progress, with more documentation to be added as features are fleshed out and tested.
+This project combines many Windows persistence techniques and aims to make it impossible for the user to prevent the binary from running.
 
 ## How it works:
 
