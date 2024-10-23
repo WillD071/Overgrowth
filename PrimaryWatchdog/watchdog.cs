@@ -46,9 +46,6 @@ class Watchdog
         Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
         Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
 
-        Persistence.Persistence.PreventShutdown();
-
-
 
         watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
         watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);

