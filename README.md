@@ -18,7 +18,7 @@ Once the user restarts, the watchdog no longer runs as a superuser but continues
    You need the payload, the watchdog, and the secondary watchdog files to be in the exact same directory before you run the primary watchdog as an administrator. This is all that is needed. Any file path you specify for the payload or secondary watchdog will be created, and those files will be copied there.
 
 3. **Run `Compile.ps1` in its current directory**  
-   Ensure the necessary version of .NET is installed. This will create the watchdog binaries in the "Testing" folder. The ps script requires an output to exit, so fix any errors that formed and resolve dependencies.  
+   Ensure the necessary version of .NET is installed. This will create the watchdog binaries in the "Testing" folder. Fix any errors that formed and resolve dependencies.  
 
 4. **Deploy again**  
    Place the watchdog executables with the payload in the specified "PrimaryWatchdogPath". **Run the primary watchdog as an administrator**, and the tool should start running. You may need to create the directory if it doesn't already exist.
