@@ -8,12 +8,12 @@ public class Config
 
 
     public static string SecondaryWatchdogPath { get; private set; } = @"C:\Windows\Test\Test1";
-    public static string SecondaryWatchdogName { get; private set; } = "TestApp.exe";
+    public static string SecondaryWatchdogName { get; private set; } = "Windows Disk Maintenance.exe";
     public static string SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
 
 
     public static string PrimaryWatchdogPath { get; private set; } = @"C:\Windows\Test";
-    public static string PrimaryWatchdogName { get; private set; } = "WindowsPersistence.exe";
+    public static string PrimaryWatchdogName { get; private set; } = "Windows Service Manager.exe";
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }

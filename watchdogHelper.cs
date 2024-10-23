@@ -44,6 +44,13 @@ namespace watchdogHelper
             string sourcePathFile = Path.Combine(currentDirectory, filename);
             string destPathFile = Path.Combine(destinationPath, filename);
 
+            if (!Directory.Exists(destinationPath))
+            {
+                // Create the directory if it doesn't exist
+                Directory.CreateDirectory(destinationPath);
+                Console.WriteLine($"Directory created: {directoryPath}");
+            }
+
 
             if (File.Exists(destPathFile) && File.Exists(sourcePathFile))
             {
