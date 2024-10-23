@@ -14,7 +14,7 @@ Once the user restarts, the watchdog no longer runs as a superuser but continues
    Configure the values you want or are using for the payload. I set inconspicuous Windows names for the watchdogs, but this can be changed. The most important detail is the file path.  
    **Note:** _Please do not choose the Windows directory or any directory with special permissions._ While this would work for some time, it is bound to break much easier.
 
-2. **Deploy**  
+2. **Read Before Next Steps**  
    You need the payload, the watchdog, and the secondary watchdog files to be in the exact same directory before you run the primary watchdog as an administrator. This is all that is needed. Any file path you specify for the payload or secondary watchdog will be created, and those files will be copied there.
 
 3. **Run `Compile.ps1`**  
