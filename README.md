@@ -4,7 +4,7 @@ This project combines many Windows Persistence techniques and aims to make it im
 
 How it works:
 
-    Two watchdog processes watch each other and a payload, and are constantly ensuring that everything is always running. Upon first run as administrator it will set up all the persistence techniques, constantly monitor to see if they are still in place, and give permissions on the registry keys so that they can be edited by anyone in the future. Once the user restarts, the watchdog no longer runs as superuser but still makes sure binaries are running and that all the persistence technques are being checked and corrected if changed. The watchdog also tries to prevent shutdown or restart events but this hasn't been tested much yet.
+Two watchdog processes watch each other and a payload, and are constantly ensuring that everything is always running. Upon first run as administrator it will set up all the persistence techniques, constantly monitor to see if they are still in place, and give permissions on the registry keys so that they can be edited by anyone in the future. Once the user restarts, the watchdog no longer runs as superuser but still makes sure binaries are running and that all the persistence technques are being checked and corrected if changed. The watchdog also tries to prevent shutdown or restart events but this hasn't been tested much yet.
 
 
 How to Use:
