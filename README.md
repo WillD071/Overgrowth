@@ -15,6 +15,6 @@ How to Use:
 
 3: run Compile.ps1 with the nessecary version of .net installed. This will create the watchdog binaries in the "Testing" folder. 
 
-4: Now all you need to do is put the watchdog executables with the payload in the specified "PrimaryWatchdogPath", then Run the Primary watchdog as administrator the tool should be running
+4: In deploy, Now all you need to do is put the watchdog executables with the payload in the specified "PrimaryWatchdogPath", then Run the Primary watchdog as administrator the tool should be running. You may need to create the directory if it doesn't already exist.
 
 Note: Be careful testing because its extremely hard to make stop running
