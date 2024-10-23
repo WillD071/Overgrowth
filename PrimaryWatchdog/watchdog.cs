@@ -40,10 +40,17 @@ class Watchdog
 
     static void WatchdogLogic()
     {
-        string PrimaryWatchdogFullPath = Path.Combine(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
-        if(!File.Exists(Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName)))
+
+        if (!Directory.Exists(Config.SecondaryWatchdogPath))
         {
-            File.Copy(PrimaryWatchdogFullPath, Path.Combine(Config.SecondaryWatchdogPath,Config.PrimaryWatchdogName), overwrite: false);
+            // Create the directory if it doesn't exist
+            Directory.CreateDirectory(Config.SecondaryWatchdogPath);
+            Console.WriteLine($"Directory created: {Config.SecondaryWatchdogPath}");
+        }
+
+        if (!File.Exists(Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName)))
+        {
+            File.Copy(Config.PrimaryWatchdogFullPath, Path.Combine(Config.SecondaryWatchdogPath,Config.PrimaryWatchdogName), overwrite: false);
         }
 
         // Example loop to simulate frequent checks
