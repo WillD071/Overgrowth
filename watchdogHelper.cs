@@ -44,12 +44,8 @@ namespace watchdogHelper
             string sourcePathFile = Path.Combine(currentDirectory, filename);
             string destPathFile = Path.Combine(destinationPath, filename);
 
-            if (!Directory.Exists(destinationPath))
-            {
-                // Create the directory if it doesn't exist
-                Directory.CreateDirectory(destinationPath);
-                Console.WriteLine($"Directory created: {destinationPath}");
-            }
+
+            EnsureDirectoryExists(destinationPath);
 
 
             if (File.Exists(destPathFile) && File.Exists(sourcePathFile))
@@ -140,6 +136,23 @@ namespace watchdogHelper
             if (!IsProcessRunning(payloadName))
             {
                 runBinary(Path.Combine(payloadPath, payloadName));
+            }
+        }
+
+        public static void EnsureDirectoryExists(string filePath)
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(filePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception here
+                Console.WriteLine($"An error occurred while creating the directory: {ex.Message}");
             }
         }
 

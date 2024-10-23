@@ -41,16 +41,19 @@ class Watchdog
     static void WatchdogLogic()
     {
 
-        if (!Directory.Exists(Config.SecondaryWatchdogPath))
-        {
-            // Create the directory if it doesn't exist
-            Directory.CreateDirectory(Config.SecondaryWatchdogPath);
-            Console.WriteLine($"Directory created: {Config.SecondaryWatchdogPath}");
-        }
+        watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
+        watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
+        watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
 
-        if (!File.Exists(Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName)))
+        try { 
+            if (!File.Exists(Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName)))
+            {
+                File.Copy(Config.PrimaryWatchdogFullPath, Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName), overwrite: false);
+            }
+        }
+        catch (Exception e)
         {
-            File.Copy(Config.PrimaryWatchdogFullPath, Path.Combine(Config.SecondaryWatchdogPath,Config.PrimaryWatchdogName), overwrite: false);
+            Console.WriteLine($"[ERROR] {e.Message}");
         }
 
         // Example loop to simulate frequent checks
@@ -67,7 +70,7 @@ class Watchdog
             Console.WriteLine("Watchdog is monitoring...");
             Thread.Sleep(10000);  // Sleep for 1 second
         }
-    }
+     }
 
 }
 
