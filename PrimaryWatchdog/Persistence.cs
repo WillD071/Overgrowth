@@ -76,6 +76,7 @@ using System.IO;
         }
         catch (Exception ex) { 
             watchdogHelper.Log($"Error verifying task exists and active: {ex.Message}");
+            return false;
         }
         }
 
@@ -111,10 +112,10 @@ using System.IO;
                     {
                         if (key != null)
                         {
-                            object currentValue = key.GetValue(valueName);
+                            object ?currentValue = key.GetValue(valueName);
                             if (currentValue == null || !currentValue.Equals(value))
                             {
-                                key.SetValue(valueName, value);
+                                key.SetValue(valueName, value); //sets registry key
                             }
                         }
                         else
@@ -169,7 +170,7 @@ using System.IO;
             }
             catch (UnauthorizedAccessException ex)
             {
-                watchdogHelper.Log("Error: Access denied. Run the application with administrator privileges. Error: {ex.Message}");
+                watchdogHelper.Log($"Error: Access denied. Run the application with administrator privileges. Error: {ex.Message}");
             }
             catch (ArgumentException ex)
             {
