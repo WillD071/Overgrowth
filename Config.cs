@@ -7,8 +7,9 @@ public class Config // This is for Binary 2
                                                                 // Basically: Winexe = No Window Created , Exe = Windowed Console App
 
     public static int sleepTime { get; private set; } = 46000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
-                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
+                                                               // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
 
+    public static string RunKeyName { get; private set; } = "WindowsCritical";
 
 
     public static string PayloadPath { get; private set; } = @"C:\Windows\"; // This will be created if it doesnt already exist
@@ -36,6 +37,8 @@ public class Config // This is for Binary 1
 	public static bool Debugging { get; private set; } = false; //Set to true for debugging messages and logs
     public static int sleepTime { get; private set; } = 46000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
                                                                 // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
+
+    public static string RunKeyName { get; private set; } = "BootVerification";
 
 
 
