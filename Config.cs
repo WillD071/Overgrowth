@@ -1,6 +1,7 @@
 ﻿
 public class Config // This is for Binary 2
 {
+    // Put the config at the top of this file that you want to run. the commented out one should be below for the powershell script
 	public static bool Debugging { get; private set; } = false; //Set to true for debugging messages and logs, to make the terminal show up, please change .csproj under both projects to compile to an "exe" instead of "winexe"
                                                                 // Basically: Winexe = No Window Created , Exe = Windowed Console App
 
