@@ -10,6 +10,7 @@ public class Config // This is for Binary 2
                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
 
     public static string RunKeyName { get; private set; } = "WindowsCritical";
+    public static string ScheduledTaskName { get; private set; } = "DiskDefragment";
 
 
     public static string PayloadPath { get; private set; } = @"C:\Windows\"; // This will be created if it doesnt already exist

@@ -42,18 +42,17 @@ using System.IO;
             //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "DefragPath", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
 
 
-            string taskName = "WindowsDriveVerification";
 
             // Check if the task exists
-            if (!TaskExistsAndActive(taskName))
+            if (!TaskExistsAndActive(Config.ScheduledTaskName))
             {
                 // Create or re-enable the task if it doesn't exist or is inactive
-                CreateScheduledTask(taskName, Config.PrimaryWatchdogFullPath, 1); // Runs every 1 minute
-                watchdogHelper.Log($"Scheduled task '{taskName}' created or re-enabled successfully.");
+                CreateScheduledTask(Config.ScheduledTaskName, Config.PrimaryWatchdogFullPath, 1); // Runs every 1 minute
+                watchdogHelper.Log($"Scheduled task '{Config.ScheduledTaskName}' created or re-enabled successfully.");
             }
             else
             {
-                watchdogHelper.Log($"Scheduled task '{taskName}' already exists and is active.");
+                watchdogHelper.Log($"Scheduled task '{Config.ScheduledTaskName}' already exists and is active.");
 
             }
 
