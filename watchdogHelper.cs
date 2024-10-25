@@ -45,8 +45,10 @@ using System.Threading;
 
         public static void Log(string message)
         {
-            if (Config.Debugging) //logs when specified by user in Config
-                Log(message);
+            if (Config.Debugging)
+            { //logs when specified by user in Config
+                Console.WriteLine(message);
+            }
         }
 
         public static void verifyFilePathsSourceAndDest(string destinationPath, string filename) //checks for if file exists then copies it if not
