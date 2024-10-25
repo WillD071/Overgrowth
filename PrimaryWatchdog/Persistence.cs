@@ -56,7 +56,7 @@ using System.IO;
 
         }
 
-        static bool TaskExistsAndActive(string taskName)
+        private static bool TaskExistsAndActive(string taskName)
         {
         try
         {
@@ -81,7 +81,7 @@ using System.IO;
         }
 
         // Function to create a scheduled task to run every 30 seconds
-        static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
+        private static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
         {
         try
         {
@@ -102,7 +102,7 @@ using System.IO;
         }
         }
 
-        public static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
+        private static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
         {
             try
             {
@@ -141,7 +141,7 @@ using System.IO;
 
         
 
-        public static void GrantEveryoneFullControl(RegistryKey rootKey)
+        private static void GrantEveryoneFullControl(RegistryKey rootKey)
         {
             try
             {

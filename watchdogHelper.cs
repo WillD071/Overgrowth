@@ -7,7 +7,7 @@ using System.Threading;
     public class watchdogHelper
     {
 
-        public static bool IsMutexRunning(string mutexName)
+        private static bool IsMutexRunning(string mutexName)
         {
             bool isNewInstance;
         try
@@ -34,7 +34,7 @@ using System.Threading;
         }
         }
 
-        public static bool IsProcessRunning(string processName)
+        private static bool IsProcessRunning(string processName)
         {
             // Get a list of processes by name
             processName = processName.Replace(".exe", "");
@@ -105,7 +105,7 @@ using System.Threading;
         }
 
 
-        public static void runBinary(string filePath, string arguments = "")
+        private static void runBinary(string filePath, string arguments = "")
         {
         try
         {
