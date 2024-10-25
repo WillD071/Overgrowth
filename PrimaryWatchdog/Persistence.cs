@@ -83,7 +83,7 @@ namespace Persistence
         static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
         {
             // Create the schtasks command to run every 30 seconds
-            string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59";
+            string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59 /RU SYSTEM"; //sets system permissions
 
             Process process = new Process();
             process.StartInfo.FileName = "schtasks";
