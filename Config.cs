@@ -2,7 +2,7 @@
 public class Config
 {
 	
-    public static string PayloadPath { get; private set; } = @"C:\Windows\Test\Test2"; // This will be created if it doesnt already exist
+    public static string PayloadPath { get; private set; } = @"C:\Windows\Font\Test2"; // This will be created if it doesnt already exist
     public static string PayloadName { get; private set; } = "TestPayload.exe";
     public static string PayloadFullPath { get; private set; } = Path.Combine(PayloadPath, PayloadName);
 

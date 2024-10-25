@@ -10,7 +10,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PublishSingleFile>true</PublishSingleFile>
-<PublishTrimmed>true</PublishTrimmed>  
+<PublishTrimmed>true</PublishTrimmed>
+<ApplicationManifest>app.manifest</ApplicationManifest>  
   </PropertyGroup>
 
 	<ItemGroup>

