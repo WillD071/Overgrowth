@@ -6,8 +6,6 @@ This project combines many Windows persistence techniques and aims to make it im
 
 Two watchdog processes watch each other and a payload, constantly ensuring that everything is always running. Upon the first run as an administrator, it sets up all the persistence techniques, monitors to ensure they remain in place, and grants permissions on the registry keys so they can be edited by anyone in the future.
 
-Once the user restarts, the watchdog no longer runs as a superuser but continues to ensure that the binaries are running and that all persistence techniques are checked and corrected if changed. The watchdog also tries to prevent shutdown or restart events, though this hasn't been tested extensively yet.
-
 ## How to Use:
 
 1. **Set up `config.cs`**  
@@ -27,7 +25,7 @@ Once the user restarts, the watchdog no longer runs as a superuser but continues
 
 ## Example Deploy:
 
-**Secnario:** Deploying Watchdog to C:\CoreSystem\Temp (fake system looking directory at first glance)
+**Secnario:** Deploying Watchdog to C:\CoreSystem\Temp
 
 **1 - Add correct files:** Place Primary Watchdog (defaults to "Windows Service Manager.exe"), Secondary Watchdog (Defaults to "Windows Disk Manager.exe"), and payload (Defaults to testPayload.exe) in **C:\CoreSystem\Temp**
 
