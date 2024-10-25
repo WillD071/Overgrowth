@@ -40,9 +40,9 @@ namespace MonitorWatchdog
             //  loop for frequent checks
             while (true)
             {
-                watchdogHelper.watchdogHelper.verifyFilePathsSourceAndDest(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
-                watchdogHelper.watchdogHelper.CheckAndRunWatchdog(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName, Config.PrimaryWatchdogMutexName);
-                Thread.Sleep(1000);
+                watchdogHelper.verifyFilePathsSourceAndDest(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
+                watchdogHelper.CheckAndRunWatchdog(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName, Config.PrimaryWatchdogMutexName);
+                Thread.Sleep(Config.sleepTime);
             }
         }
 

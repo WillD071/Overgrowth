@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
 <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
@@ -10,12 +10,17 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PublishSingleFile>true</PublishSingleFile>
-<PublishTrimmed>true</PublishTrimmed>  
+<PublishTrimmed>true</PublishTrimmed>
+<ApplicationManifest>app.manifest</ApplicationManifest>  
   </PropertyGroup>
 
 	<ItemGroup>
 		<Compile Include="..\watchdogHelper.cs" />
 		<Compile Include="..\Config.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
 	</ItemGroup>
 
 </Project>

