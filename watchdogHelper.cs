@@ -46,7 +46,7 @@ using System.Security.Principal;
         {
             if (Config.Debugging)
             { //logs when specified by user in Config
-                Console.WriteLine(message);
+                watchdogHelper.Log(message);
             }
         }
 
@@ -156,11 +156,11 @@ using System.Security.Principal;
         }
         catch (ArgumentException)
         {
-            Console.WriteLine("No process with the specified PID is running.");
+            watchdogHelper.Log("No process with the specified PID is running.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to kill process: {ex.Message}");
+            watchdogHelper.Log($"Failed to kill process: {ex.Message}");
         }
         return false;
     }
@@ -188,7 +188,7 @@ using System.Security.Principal;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            watchdogHelper.Log($"Error: {ex.Message}");
             return "Unknown";
         }
     }
@@ -281,7 +281,7 @@ using System.Security.Principal;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            watchdogHelper.Log($"Error: {ex.Message}");
         }
     }
 
@@ -301,11 +301,11 @@ using System.Security.Principal;
 
             if (process.ExitCode != 0)
             {
-                Console.WriteLine($"Error: {process.StandardError.ReadToEnd()}");
+                watchdogHelper.Log($"Error: {process.StandardError.ReadToEnd()}");
                 return false;
             }
 
-            Console.WriteLine(process.StandardOutput.ReadToEnd());
+            watchdogHelper.Log(process.StandardOutput.ReadToEnd());
             return true;
         }
     }
@@ -329,7 +329,7 @@ using System.Security.Principal;
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            watchdogHelper.Log("Error: " + ex.Message);
         }
 
         return null; // Return null if no process is found or an error occurs
