@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Management;
 using System.Management.Automation;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using System.Xml.Linq;
@@ -150,7 +151,25 @@ using System.Xml.Linq;
         Log($"Error Running Binary: {ex.Message}");
         }
         }
-
+    public static bool KillProcessById(int pid)
+    {
+        try
+        {
+            Process process = Process.GetProcessById(pid);
+            process.Kill();
+            process.WaitForExit(); // Optionally wait for the process to exit
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            Console.WriteLine("No process with the specified PID is running.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to kill process: {ex.Message}");
+        }
+        return false;
+    }
 
     public static bool IsRunningAsAdministrator()
     {
@@ -159,36 +178,83 @@ using System.Xml.Linq;
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
 
-    public static string GetProcessOwner(int pid)
+    public static string GetProcessPermissionLevel(int pid)
     {
         try
         {
-            string query = $"SELECT * FROM Win32_Process WHERE ProcessId = {pid}";
-            using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+            using (Process process = Process.GetProcessById(pid))
             {
-                foreach (ManagementObject obj in searcher.Get())
-                {
-                    // Prepare variables for output
-                    string user = string.Empty;
-                    string domain = string.Empty;
+                IntPtr processHandle = process.Handle;
 
-                    // Get the owner information
-                    obj.InvokeMethod("GetOwner", new object[] { user, domain });
-
-                    // Return formatted string
-                    return $"{user}@{domain}";
-                }
+                if (IsProcessElevated(processHandle))
+                    return "Administrator";
+                else
+                    return "User";
             }
-        }
-        catch (ManagementException)
-        {
-            return "Process not found";
         }
         catch (Exception ex)
         {
-            return $"Error: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+            return "Unknown";
         }
-        return "Owner not found";
+    }
+
+    private static bool IsProcessElevated(IntPtr processHandle)
+    {
+        IntPtr tokenHandle = IntPtr.Zero;
+        try
+        {
+            if (OpenProcessToken(processHandle, TOKEN_QUERY, out tokenHandle))
+            {
+                var elevation = new TOKEN_ELEVATION();
+                int elevationSize = Marshal.SizeOf(typeof(TOKEN_ELEVATION));
+                IntPtr elevationPtr = Marshal.AllocHGlobal(elevationSize);
+
+                try
+                {
+                    if (GetTokenInformation(tokenHandle, TOKEN_INFORMATION_CLASS.TokenElevation, elevationPtr, elevationSize, out _))
+                    {
+                        elevation = (TOKEN_ELEVATION)Marshal.PtrToStructure(elevationPtr, typeof(TOKEN_ELEVATION))!;
+                        return elevation.TokenIsElevated != 0;
+                    }
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(elevationPtr);
+                }
+            }
+            return false;
+        }
+        finally
+        {
+            if (tokenHandle != IntPtr.Zero)
+            {
+                CloseHandle(tokenHandle);
+            }
+        }
+    }
+
+    // WinAPI functions and constants
+    private const int TOKEN_QUERY = 0x0008;
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern bool OpenProcessToken(IntPtr processHandle, int desiredAccess, out IntPtr tokenHandle);
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    private static extern bool GetTokenInformation(IntPtr tokenHandle, TOKEN_INFORMATION_CLASS tokenInfoClass, IntPtr tokenInfo, int tokenInfoLength, out int returnLength);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool CloseHandle(IntPtr hObject);
+
+    private enum TOKEN_INFORMATION_CLASS
+    {
+        TokenElevation = 20
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct TOKEN_ELEVATION
+    {
+        public int TokenIsElevated;
     }
 
     public static int? GetProcessIdByName(string processName)

@@ -23,7 +23,8 @@ class Watchdog
 
                     if (permissionLevel == "User")
                     {
-                        watchdogHelper.Log("I WOULD KILL OTHER PROCESS");
+                        watchdogHelper.Log("Killing lower privledged process.");
+                        watchdogHelper.KillProcessById((int)PID);
                     }
             }
             else
