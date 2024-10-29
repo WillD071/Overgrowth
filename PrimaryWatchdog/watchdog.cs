@@ -1,27 +1,55 @@
 using Microsoft.Win32;
+using System.Diagnostics;
 
 class Watchdog
 {
-   static void Main(string[] args)
+    static void Main(string[] args)
     {
-        // Create or open the mutex to ensure only one instance is running
+        bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
+        watchdogHelper.Log("Current process is running with " + (isAdmin ? "Administrator" : "User") + " privileges.");
+
         using (Mutex mutex = new Mutex(false, Config.PrimaryWatchdogMutexName, out bool isNewInstance))
         {
-            if (!isNewInstance)
+            if (!isNewInstance && isAdmin)
             {
-                //Watchdog process is already running. Exiting.
+                watchdogHelper.Log("Another instance of the watchdog is already running.");
+
+                int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
+
+            if (PID.HasValue)
+            {
+                string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
+                    // rest of your code here
+
+                    if (permissionLevel == "User")
+                    {
+                        watchdogHelper.Log("I WOULD KILL OTHER PROCESS");
+                    }
+            }
+            else
+            {
+                // handle the case when PID is null
+                watchdogHelper.Log("Failed to get process ID.");
+            }
+
+                
+
+
+            }
+            else if (!isNewInstance)
+            {
                 return;
             }
 
-
-            WatchdogLogic();
-
+            // Call the main watchdog logic
+            //WatchdogLogic();
+            Console.ReadLine();
         }
     }
 
 
 
-    static void WatchdogLogic()
+        static void WatchdogLogic()
     {
         
 
@@ -57,4 +85,5 @@ class Watchdog
      }
 
 }
+   
 

@@ -10,6 +10,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PublishSingleFile>true</PublishSingleFile>
+	  <EnableComInterop>true</EnableComInterop>
 <PublishTrimmed>true</PublishTrimmed>  
   </PropertyGroup>
 
