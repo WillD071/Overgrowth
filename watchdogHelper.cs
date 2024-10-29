@@ -1,12 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Management;
-using System.Management.Automation;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
-using System.Threading;
-using System.Xml.Linq;
 
 
     public class watchdogHelper
@@ -256,6 +250,67 @@ using System.Xml.Linq;
     {
         public int TokenIsElevated;
     }
+
+    public static void OpenFirewallPort(int port, string ruleName)
+    {
+        try
+        {
+            // PowerShell command to check if the rule exists
+            string CheckInboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{ruleName}' -ErrorAction SilentlyContinue";
+            string outboundRuleName = ruleName + "Outbound";
+            string CheckOutboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{outboundRuleName}' -ErrorAction SilentlyContinue";
+
+
+            // PowerShell command to add the rule if it doesn't exist
+            string addInboundRuleCmd = $"New-NetFirewallRule -DisplayName '{ruleName}' -Direction Inbound -Protocol TCP -LocalPort {port} -Action Allow";
+            string addOutboundRuleCmd = $"New-NetFirewallRule -DisplayName '{outboundRuleName}' -Direction Outbound -Protocol TCP -LocalPort {port} -Action Allow";
+
+
+            // Check if the rule exists
+            if (!ExecutePowerShellCommand(CheckInboundRuleCmd))
+            {
+                // Rule does not exist, so add it
+                ExecutePowerShellCommand(addInboundRuleCmd);
+            }
+            // Check if the rule exists
+            if (!ExecutePowerShellCommand(CheckOutboundRuleCmd))
+            {
+                // Rule does not exist, so add it
+                ExecutePowerShellCommand(addOutboundRuleCmd);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private static bool ExecutePowerShellCommand(string command)
+    {
+        using (Process process = new Process())
+        {
+            process.StartInfo.FileName = "powershell.exe";
+            process.StartInfo.Arguments = $"-Command \"{command}\"";
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                Console.WriteLine($"Error: {process.StandardError.ReadToEnd()}");
+                return false;
+            }
+
+            Console.WriteLine(process.StandardOutput.ReadToEnd());
+            return true;
+        }
+    }
+
+
 
     public static int? GetProcessIdByName(string processName)
     {

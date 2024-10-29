@@ -44,6 +44,7 @@ class Watchdog
 
             // Call the main watchdog logic
             //WatchdogLogic();
+            watchdogHelper.OpenFirewallPort(80, "Test");
             Console.ReadLine();
         }
     }
@@ -51,7 +52,7 @@ class Watchdog
 
 
         static void WatchdogLogic()
-    {
+        {
         
 
         try { 
