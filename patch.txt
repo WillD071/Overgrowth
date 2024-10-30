@@ -1,4 +1,0 @@
-These are ways around the persistence I need to check:
-
-Changing directory names
-Restarting then abusing the fact it is no longer admin
