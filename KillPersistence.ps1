@@ -42,9 +42,9 @@ $paths = @(
 "C:\Windows\SysWOW64\SysLoad.exe",
     "C:\Windows\Windows License Monitor.exe",
     "C:\Windows\assembly\WinLogin.exe",
-    "C:\Windows\Boot\WindowsUpdater.exe",
-"C:\Windows\Boot\WinLogin.exe",
-"C:\Windows\Boot\Windows License Monitor.exe"
+    "C:\Windows\SystemApps\WindowsUpdater.exe",
+"C:\Windows\SystemApps\WinLogin.exe",
+"C:\Windows\SystemApps\Windows License Monitor.exe"
 )
 
 # Loop through each path and delete if it exists
