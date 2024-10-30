@@ -17,9 +17,6 @@ namespace MonitorWatchdog
 {
     public class MonitorWatchdog
     {
-
-
-
         static void Main(string[] args)
         {
             bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
@@ -38,25 +35,26 @@ namespace MonitorWatchdog
                         string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
                         // rest of your code here
 
-                        if (permissionLevel == "User")
+                        if (permissionLevel != "Administrator")
                         {
                             watchdogHelper.Log("Killing lower privledged process.");
                             watchdogHelper.KillProcessById((int)PID);
+                        }
+                        else
+                        {
+                            Environment.Exit(0);
                         }
                     }
                     else
                     {
                         // handle the case when PID is null
                         watchdogHelper.Log("Failed to get process ID.");
+                        Environment.Exit(0);
                     }
-
-
-
-
                 }
                 else if (!isNewInstance)
                 {
-                    return;
+                    Environment.Exit(0);
                 }
 
                 // Call the main watchdog logic
