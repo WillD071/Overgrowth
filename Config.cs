@@ -1,4 +1,4 @@
-﻿
+﻿/*
 public class Config // This is for Binary 1
 {
 	public static bool Debugging { get; private set; } = true; //Set to true for debugging messages and logs
@@ -29,9 +29,9 @@ public class Config // This is for Binary 1
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }
+*/
 
 /*
-
 public class Config // This is for payload 2
 {
     // Put the config at the top of this file that you want to run. the commented out one should be below for the powershell script
@@ -68,7 +68,7 @@ public class Config // This is for payload 2
 }
 */
 
-/*
+
 
 public class Config // This is for payload 3
 {
@@ -104,4 +104,3 @@ public class Config // This is for payload 3
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDogBin3";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }
-*/
