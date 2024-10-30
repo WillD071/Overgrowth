@@ -6,7 +6,7 @@
 <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
    <SelfContained>true</SelfContained>
-    <AssemblyName>Windows Service Manager</AssemblyName> <!-- Specify your executable name here -->
+    <AssemblyName>Windows Service Scheduler</AssemblyName> <!-- Specify your executable name here -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PublishSingleFile>true</PublishSingleFile>
