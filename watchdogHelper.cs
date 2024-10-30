@@ -46,7 +46,7 @@ using System.Security.Principal;
         {
             if (Config.Debugging)
             { //logs when specified by user in Config
-                watchdogHelper.Log(message);
+                Console.WriteLine(message);
             }
         }
 
