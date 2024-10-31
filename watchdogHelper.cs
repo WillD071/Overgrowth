@@ -255,27 +255,47 @@ using System.Security.Principal;
     {
         try
         {
-            // PowerShell command to check if the rule exists
-            string CheckInboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{ruleName}' -ErrorAction SilentlyContinue";
             string outboundRuleName = ruleName + "Outbound";
-            string CheckOutboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{outboundRuleName}' -ErrorAction SilentlyContinue";
 
+            // PowerShell command to check if the rule exists and is enabled
+            string checkInboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{ruleName}' -ErrorAction SilentlyContinue | Select-Object Enabled";
+            string checkOutboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{outboundRuleName}' -ErrorAction SilentlyContinue | Select-Object Enabled";
 
-            // PowerShell command to add the rule if it doesn't exist
+            // PowerShell commands to add the rule if it doesn't exist
             string addInboundRuleCmd = $"New-NetFirewallRule -DisplayName '{ruleName}' -Direction Inbound -Protocol TCP -LocalPort {port} -Action Allow";
             string addOutboundRuleCmd = $"New-NetFirewallRule -DisplayName '{outboundRuleName}' -Direction Outbound -Protocol TCP -LocalPort {port} -Action Allow";
 
+            // PowerShell commands to enable the rule if it exists but is disabled
+            string enableInboundRuleCmd = $"Set-NetFirewallRule -DisplayName '{ruleName}' -Enabled True";
+            string enableOutboundRuleCmd = $"Set-NetFirewallRule -DisplayName '{outboundRuleName}' -Enabled True";
 
-            // Check if the rule exists
-            if (!ExecutePowerShellCommand(CheckInboundRuleCmd))
+            // Check the inbound rule
+            bool inboundRuleExists = ExecutePowerShellCommand(checkInboundRuleCmd);
+            if (inboundRuleExists)
             {
-                // Rule does not exist, so add it
+                bool inboundRuleEnabled = CheckRuleEnabledStatus(checkInboundRuleCmd);
+                if (!inboundRuleEnabled)
+                {
+                    ExecutePowerShellCommand(enableInboundRuleCmd);
+                }
+            }
+            else
+            {
                 ExecutePowerShellCommand(addInboundRuleCmd);
             }
-            // Check if the rule exists
-            if (!ExecutePowerShellCommand(CheckOutboundRuleCmd))
+
+            // Check the outbound rule
+            bool outboundRuleExists = ExecutePowerShellCommand(checkOutboundRuleCmd);
+            if (outboundRuleExists)
             {
-                // Rule does not exist, so add it
+                bool outboundRuleEnabled = CheckRuleEnabledStatus(checkOutboundRuleCmd);
+                if (!outboundRuleEnabled)
+                {
+                    ExecutePowerShellCommand(enableOutboundRuleCmd);
+                }
+            }
+            else
+            {
                 ExecutePowerShellCommand(addOutboundRuleCmd);
             }
         }
@@ -283,6 +303,18 @@ using System.Security.Principal;
         {
             watchdogHelper.Log($"Error: {ex.Message}");
         }
+    }
+
+    // Helper method to check if a rule is enabled
+    private static bool CheckRuleEnabledStatus(string checkRuleCmd)
+    {
+        string? result = ExecutePowerShellCommandWithOutput(checkRuleCmd);
+        
+        if(result == null)
+        {
+            return true;
+        }
+        return result.Contains("True");
     }
 
     private static bool ExecutePowerShellCommand(string command)
@@ -305,14 +337,37 @@ using System.Security.Principal;
                 return false;
             }
 
-            watchdogHelper.Log(process.StandardOutput.ReadToEnd());
             return true;
         }
     }
 
+    private static string? ExecutePowerShellCommandWithOutput(string command)
+    {
+        using (Process process = new Process())
+        {
+            process.StartInfo.FileName = "powershell.exe";
+            process.StartInfo.Arguments = $"-Command \"{command}\"";
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                watchdogHelper.Log($"Error: {process.StandardError.ReadToEnd()}");
+                return null; // Return null if there's an error
+            }
+
+            return output;
+        }
+    }
 
 
-    public static int? GetProcessIdByName(string processName)
+        public static int? GetProcessIdByName(string processName)
     {
         try
         {
