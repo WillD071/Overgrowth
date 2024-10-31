@@ -188,7 +188,7 @@ using System.Security.Principal;
         }
         catch (Exception ex)
         {
-            watchdogHelper.Log($"Error: {ex.Message}");
+            watchdogHelper.Log($"Error getting process permission level: {ex.Message}");
             return "Unknown";
         }
     }
@@ -301,7 +301,7 @@ using System.Security.Principal;
         }
         catch (Exception ex)
         {
-            watchdogHelper.Log($"Error: {ex.Message}");
+            watchdogHelper.Log($"Error Modifying firewall with powershell: {ex.Message}");
         }
     }
 
@@ -335,7 +335,7 @@ using System.Security.Principal;
 
                 if (process.ExitCode != 0)
                 {
-                    watchdogHelper.Log($"Error: {process.StandardError.ReadToEnd()}");
+                    watchdogHelper.Log($"Error in output of powershell command:[{command} {process.StandardError.ReadToEnd() }");
                     return false;
                 }
 
@@ -344,7 +344,7 @@ using System.Security.Principal;
         }
         catch (Exception ex)
         {
-            watchdogHelper.Log("Error: " + ex.Message);
+            watchdogHelper.Log("Error Running powershell command: " + ex.Message);
             return false;
         }
     }
@@ -399,7 +399,7 @@ using System.Security.Principal;
         }
         catch (Exception ex)
         {
-            watchdogHelper.Log("Error: " + ex.Message);
+            watchdogHelper.Log("Error getting PID from process name: " + ex.Message);
         }
 
         return null; // Return null if no process is found or an error occurs
