@@ -18,7 +18,7 @@ by anyone in the future.
    - All the other fields are self explanatory and should be set to unique values
    **Note:** _Please do not choose any of the same values as what is being used in a competition to ensure there is no overlap_
 
-3.**Check the `OutputType` csproj field 
+3.**Check the `OutputType` csproj field**
    Ensure the **OutputType** field in PrimaryWatchdog\PrimaryWatchdog.csproj and SecondaryWatchdog\SecondaryWatchdog.csproj is set to `WinEXE` not `exe`. Winexe means the program will not make a window when ran in the background.
 
 5. **Read Before Next Steps**  
