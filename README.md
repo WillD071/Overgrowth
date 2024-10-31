@@ -18,17 +18,18 @@ by anyone in the future.
    - All the other fields are self explanatory and should be set to unique values
    **Note:** _Please do not choose any of the same values as what is being used in a competition to ensure there is no overlap_
 
-3. Ensure the **OutputType** field in PrimaryWatchdog\PrimaryWatchdog.csproj and SecondaryWatchdog\SecondaryWatchdog.csproj is set to `WinEXE` not `exe`. Winexe means the program will not make a window when ran in the background.
+3.**Check the `OutputType` csproj field 
+   Ensure the **OutputType** field in PrimaryWatchdog\PrimaryWatchdog.csproj and SecondaryWatchdog\SecondaryWatchdog.csproj is set to `WinEXE` not `exe`. Winexe means the program will not make a window when ran in the background.
 
-4. **Read Before Next Steps**  
+5. **Read Before Next Steps**  
    You need the payload, the watchdog, and the secondary watchdog files to be in the exact same directory before you run the primary watchdog as an administrator. This is all that is needed. Any file path you specify for the payload or secondary watchdog will be created, and those files will be copied there.
 
-5. **Put your payload in the PutPayloadHere folder** - Ensure your payload is the only .exe in the folder.
+6. **Put your payload in the PutPayloadHere folder** - Ensure your payload is the only .exe in the folder.
 
-6. **Run `Compile.ps1` in its current directory**  
+7. **Run `Compile.ps1` in its current directory**  
    Ensure that you have .NET8 installed and any other dependencies that arise. This will create the watchdog binaries in the "Testing" folder. Fix any errors that formed and resolve dependencies. This will place your watchdog, secondary watchdog, and your renamed payload in the **OutputBinaries** folder.
 
-7. **Deploy**  
+8. **Deploy**  
    Place the watchdog executables with the payload in the specified "PrimaryWatchdogPath" in Config.cs. **Run the primary watchdog (The .EXE specified in the PrimaryWatchDogName) as an administrator**, now persistence is running. 
 
 **Note:** CopyAndRunTool.ps1, TestIfRunning.ps1, and KillPersistence.ps1 are all scripts I made to make deployment and testing easier. They are hardcoded for everything so they would work with anything if you changed some filename and filepaths
