@@ -319,30 +319,39 @@ using System.Security.Principal;
 
     private static bool ExecutePowerShellCommand(string command)
     {
-        using (Process process = new Process())
+        try
         {
-            process.StartInfo.FileName = "powershell.exe";
-            process.StartInfo.Arguments = $"-Command \"{command}\"";
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
+            using (Process process = new Process())
             {
-                watchdogHelper.Log($"Error: {process.StandardError.ReadToEnd()}");
-                return false;
-            }
+                process.StartInfo.FileName = "powershell.exe";
+                process.StartInfo.Arguments = $"-Command \"{command}\"";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
 
-            return true;
+                process.Start();
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    watchdogHelper.Log($"Error: {process.StandardError.ReadToEnd()}");
+                    return false;
+                }
+
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            watchdogHelper.Log("Error: " + ex.Message);
+            return false;
         }
     }
 
     private static string? ExecutePowerShellCommandWithOutput(string command)
     {
+        try { 
         using (Process process = new Process())
         {
             process.StartInfo.FileName = "powershell.exe";
@@ -364,11 +373,17 @@ using System.Security.Principal;
 
             return output;
         }
+        }
+        catch (Exception ex)
+        {
+            watchdogHelper.Log("Error: " + ex.Message);
+            return "";
+        }
     }
 
 
         public static int? GetProcessIdByName(string processName)
-    {
+        {
         try
         {
             Process[] processes = Process.GetProcessesByName(processName);
