@@ -67,11 +67,12 @@ namespace MonitorWatchdog
         static void WatchdogLogic()
         {
             //  loop for frequent checks
+            int SecondarySleep = Config.sleepTime + 5000;
             while (true)
             {
                 watchdogHelper.verifyFilePathsSourceAndDest(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
                 watchdogHelper.CheckAndRunWatchdog(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName, Config.PrimaryWatchdogMutexName);
-                Thread.Sleep(Config.sleepTime);
+                Thread.Sleep(SecondarySleep);
             }
         }
 

