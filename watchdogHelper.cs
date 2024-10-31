@@ -356,12 +356,23 @@ using System.Security.Principal;
         {
             process.StartInfo.FileName = "powershell.exe";
             process.StartInfo.Arguments = $"-Command \"{command}\"";
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
+                if (Config.Debugging)
+                {
+                process.StartInfo.CreateNoWindow = false;
+                process.StartInfo.RedirectStandardError = false;
+                process.StartInfo.RedirectStandardOutput = false;
 
-            process.Start();
+
+                }
+                else
+                {
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                }
+
+                process.Start();
             string output = process.StandardOutput.ReadToEnd();
             process.WaitForExit();
 

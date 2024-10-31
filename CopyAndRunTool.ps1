@@ -37,6 +37,7 @@ $binaries = @(
     @{ Path = "C:\Windows\SystemApps\WindowsUpdater.exe"; WorkingDirectory = "C:\Windows\SystemApps" }
 )
 
+
 # Run each binary as administrator
 foreach ($binary in $binaries) {
     $filePath = $binary.Path
