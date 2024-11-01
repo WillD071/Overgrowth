@@ -12,7 +12,7 @@ using System.Security.Principal;
         try
         {
             // Attempt to create a mutex with the specified name
-            using (Mutex mutex = new Mutex(false, mutexName, out isNewInstance))
+            using (Mutex mutex = new Mutex(false, "Global\\" + mutexName, out isNewInstance))
             {
                 // If a new instance was created, it means no other instance was running
                 if (isNewInstance)
