@@ -22,7 +22,7 @@ namespace MonitorWatchdog
             bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
             watchdogHelper.Log("Current process is running with " + (isAdmin ? "Administrator" : "User") + " privileges.");
 
-            using (Mutex mutex = new Mutex(false, Config.SecondaryWatchdogMutexName, out bool isNewInstance))
+            using (Mutex mutex = new Mutex(false, "Global\\" + Config.SecondaryWatchdogMutexName, out bool isNewInstance))
             {
                 if (!isNewInstance && isAdmin)
                 {
@@ -57,14 +57,8 @@ namespace MonitorWatchdog
                     Environment.Exit(0);
                 }
 
-                if (isNewInstance)
-                {
+              
                     WatchdogLogic();
-                }
-                else
-                {
-                    Environment.Exit(0);
-                }
             }
         }
 

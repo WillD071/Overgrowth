@@ -5,11 +5,11 @@ class Watchdog
 {
     static void Main(string[] args)
     {
-        bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
-        watchdogHelper.Log("Current process is running with " + (isAdmin ? "Administrator" : "User") + " privileges.");
 
-        using (Mutex mutex = new Mutex(false, Config.PrimaryWatchdogMutexName, out bool isNewInstance))
+        using (Mutex mutex = new Mutex(false, "Global\\" + Config.PrimaryWatchdogMutexName, out bool isNewInstance))
         {
+            bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
+
             if (!isNewInstance && isAdmin)
             {
 
