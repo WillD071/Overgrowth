@@ -45,6 +45,7 @@ foreach ($binary in $binaries) {
 
     if (Test-Path -Path $filePath) {
         try {
+		Start-Sleep -Seconds 5
             Start-Process -FilePath $filePath -Verb RunAs -WorkingDirectory $workingDir
             Write-Output "Executed $filePath as administrator"
         }

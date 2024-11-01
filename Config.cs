@@ -1,4 +1,6 @@
-﻿public class Config // This is for payload 3
+﻿
+
+public class Config // This is for payload 3
 {
     // Put the config at the top of this file that you want to run. the commented out one should be below for the powershell script
     public static bool Debugging { get; private set; } = false; //Set to true for debugging messages and logs, to make the terminal show up, please change .csproj under both projects to compile to an "exe" instead of "winexe"
@@ -35,9 +37,8 @@
 
 
 
-
-
 /*
+
 
 public class Config // This is for Binary 1
 {
@@ -69,8 +70,6 @@ public class Config // This is for Binary 1
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDog";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }
-
-
 
 
 public class Config // This is for payload 2
@@ -107,6 +106,10 @@ public class Config // This is for payload 2
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDogBin2";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }
+
+
+
+
 
 
 
