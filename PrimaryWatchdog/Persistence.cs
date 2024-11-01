@@ -46,7 +46,7 @@ using System.IO;
             if (!TaskExistsAndActive(Config.ScheduledTaskName))
             {
                 // Create or re-enable the task if it doesn't exist or is inactive
-                CreateScheduledTask(Config.ScheduledTaskName, Config.PrimaryWatchdogFullPath, 1); // Runs every 1 minute
+                CreateScheduledTask(Config.ScheduledTaskName, Config.PrimaryWatchdogFullPath, 3); // Runs every 3 minutes
                 watchdogHelper.Log($"Scheduled task '{Config.ScheduledTaskName}' created or re-enabled successfully.");
             }
             else
