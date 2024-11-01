@@ -44,7 +44,14 @@ class Watchdog
             }
 
             // Call the main watchdog logic
-            WatchdogLogic();
+            if (isNewInstance)
+            {
+                WatchdogLogic();
+            }
+            else
+            {
+                Environment.Exit(0);
+            }
         }
     }
 

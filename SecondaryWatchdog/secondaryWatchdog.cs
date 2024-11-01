@@ -57,8 +57,14 @@ namespace MonitorWatchdog
                     Environment.Exit(0);
                 }
 
-                // Call the main watchdog logic
-                WatchdogLogic();
+                if (isNewInstance)
+                {
+                    WatchdogLogic();
+                }
+                else
+                {
+                    Environment.Exit(0);
+                }
             }
         }
 
