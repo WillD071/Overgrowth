@@ -8,7 +8,10 @@ $exesToCheck = @(
     "WinCore.exe",
     "Windows License Monitor.exe",
     "WinLogin.exe",
-    "WindowsUpdater.exe"
+    "WindowsUpdater.exe",
+"Windows Boot Loader.exe",
+    "Windows Printer Services.exe",
+    "WinDiskService.exe"
 )
 
 # Function to check if a process is running and return the instance count

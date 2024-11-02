@@ -21,7 +21,7 @@
 
 
 
-    public static string SecondaryWatchdogPath { get; private set; } = @"C:\Windows\SystemResources\"; // This will be created if it doesnt already exist
+    public static string SecondaryWatchdogPath { get; private set; } = @"C:\Windows\SysWOW64\"; // This will be created if it doesnt already exist
     public static string SecondaryWatchdogName { get; private set; } = "Windows Printer Services.exe";
     public static string SecondaryWatchdogMutexName { get; private set; } = "SecondaryWDogBin4";
     public static string SecondaryWatchdogFullPath { get; private set; } = Path.Combine(SecondaryWatchdogPath, SecondaryWatchdogName);
