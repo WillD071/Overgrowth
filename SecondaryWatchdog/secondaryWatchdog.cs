@@ -17,15 +17,12 @@ namespace MonitorWatchdog
 {
     public class MonitorWatchdog
     {
-
-
-
         static void Main(string[] args)
         {
             bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
             watchdogHelper.Log("Current process is running with " + (isAdmin ? "Administrator" : "User") + " privileges.");
 
-            using (Mutex mutex = new Mutex(false, Config.PrimaryWatchdogMutexName, out bool isNewInstance))
+            using (Mutex mutex = new Mutex(false, "Global\\" + Config.SecondaryWatchdogMutexName, out bool isNewInstance))
             {
                 if (!isNewInstance && isAdmin)
                 {
@@ -38,29 +35,30 @@ namespace MonitorWatchdog
                         string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
                         // rest of your code here
 
-                        if (permissionLevel == "User")
+                        if (permissionLevel != "Administrator")
                         {
                             watchdogHelper.Log("Killing lower privledged process.");
                             watchdogHelper.KillProcessById((int)PID);
+                        }
+                        else
+                        {
+                            Environment.Exit(0);
                         }
                     }
                     else
                     {
                         // handle the case when PID is null
                         watchdogHelper.Log("Failed to get process ID.");
+                        Environment.Exit(0);
                     }
-
-
-
-
                 }
                 else if (!isNewInstance)
                 {
-                    return;
+                    Environment.Exit(0);
                 }
 
-                // Call the main watchdog logic
-                WatchdogLogic();
+              
+                    WatchdogLogic();
             }
         }
 
@@ -69,11 +67,12 @@ namespace MonitorWatchdog
         static void WatchdogLogic()
         {
             //  loop for frequent checks
+            int SecondarySleep = Config.sleepTime + 5000;
             while (true)
             {
                 watchdogHelper.verifyFilePathsSourceAndDest(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
                 watchdogHelper.CheckAndRunWatchdog(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName, Config.PrimaryWatchdogMutexName);
-                Thread.Sleep(Config.sleepTime);
+                Thread.Sleep(SecondarySleep);
             }
         }
 

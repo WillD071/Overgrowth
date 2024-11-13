@@ -8,18 +8,21 @@ $exesToCheck = @(
     "WinCore.exe",
     "Windows License Monitor.exe",
     "WinLogin.exe",
-    "WindowsUpdater.exe"
+    "WindowsUpdater.exe",
+"Windows Boot Loader.exe",
+    "Windows Printer Services.exe",
+    "WinDiskService.exe"
 )
 
-# Function to check if a process is running
+# Function to check if a process is running and return the instance count
 function Check-Process {
     param (
         [string]$processName
     )
 
-    # Check if the process is running
-    $process = Get-Process -Name ($processName -replace '.exe$', '') -ErrorAction SilentlyContinue
-    return $process -ne $null
+    # Get all instances of the process
+    $processes = Get-Process -Name ($processName -replace '.exe$', '') -ErrorAction SilentlyContinue
+    return $processes.Count
 }
 
 # Loop to continuously check processes
@@ -30,9 +33,9 @@ while ($true) {
 
     # Iterate over each exe and check if it's running
     foreach ($exe in $exesToCheck) {
-        $isRunning = Check-Process -processName $exe
-        if ($isRunning) {
-            Write-Output "${exe}: Running"
+        $instanceCount = Check-Process -processName $exe
+        if ($instanceCount -gt 0) {
+            Write-Output "${exe}: Running ($instanceCount instance(s))"
         }
         else {
             Write-Output "${exe}: Not Running"

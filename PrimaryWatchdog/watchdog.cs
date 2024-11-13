@@ -5,45 +5,53 @@ class Watchdog
 {
     static void Main(string[] args)
     {
-        bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
-        watchdogHelper.Log("Current process is running with " + (isAdmin ? "Administrator" : "User") + " privileges.");
 
-        using (Mutex mutex = new Mutex(false, Config.PrimaryWatchdogMutexName, out bool isNewInstance))
+        using (Mutex mutex = new Mutex(false, "Global\\" + Config.PrimaryWatchdogMutexName, out bool isNewInstance))
         {
+            bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
+
             if (!isNewInstance && isAdmin)
             {
+
                 watchdogHelper.Log("Another instance of the watchdog is already running.");
 
                 int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
 
-            if (PID.HasValue)
-            {
-                string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
+                if (PID.HasValue)
+                {
+                    string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
                     // rest of your code here
 
-                    if (permissionLevel == "User")
+                    if (permissionLevel != "Administrator")
                     {
                         watchdogHelper.Log("Killing lower privledged process.");
                         watchdogHelper.KillProcessById((int)PID);
                     }
-            }
-            else
+                    else
+                    {
+                        Environment.Exit(0);
+                    }
+                }
+                else
+                {
+                    // handle the case when PID is null
+                    watchdogHelper.Log("Failed to get process ID.");
+                    Environment.Exit(0);
+                }
+            } else if (!isNewInstance)
             {
-                // handle the case when PID is null
-                watchdogHelper.Log("Failed to get process ID.");
-            }
-
-                
-
-
-            }
-            else if (!isNewInstance)
-            {
-                return;
+                Environment.Exit(0);
             }
 
             // Call the main watchdog logic
-            WatchdogLogic();
+            if (isNewInstance)
+            {
+                WatchdogLogic();
+            }
+            else
+            {
+                Environment.Exit(0);
+            }
         }
     }
 
