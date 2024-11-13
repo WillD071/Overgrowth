@@ -13,16 +13,15 @@ public class Deployment
 
         try
         {
-            string relativePath = Path.Combine(Directory.GetCurrentDirectory(), "Confits");
+            string relativePath = Path.Combine(Directory.GetCurrentDirectory(), "Configs");
             string fullPath = Path.GetFullPath(relativePath);
             if (Directory.Exists(fullPath))
             {
+                string? parentPath = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
                 foreach (string dir in Directory.GetDirectories(fullPath, "*", SearchOption.AllDirectories))
                 {
-                    
-
-
-
+                    ReplaceConfigFile( Path.Combine(parentPath, "Config.cs"), Path.Combine(dir, "Config.cs"));
+                    Publish(Path.Combine(parentPath, "PrimaryWatchdog", "PrimaryWatchdog.csproj"), );
 
                 }
             }
@@ -172,6 +171,36 @@ public class Deployment
         {
             Console.WriteLine("Error reading the file: " + ex.Message);
             return (null, null);
+        }
+    }
+
+    public static void ReplaceConfigFile(string oldFilePath, string newFilePath)
+    {
+        try
+        {
+            // Check if the old Config.cs file exists
+            if (File.Exists(oldFilePath))
+            {
+                // Delete the old Config.cs file
+                File.Delete(oldFilePath);
+                Console.WriteLine("Old Config.cs file deleted.");
+            }
+
+            // Check if the new Config.cs file exists
+            if (File.Exists(newFilePath))
+            {
+                // Copy the new Config.cs file to the old location
+                File.Copy(newFilePath, oldFilePath);
+                Console.WriteLine("New Config.cs file copied.");
+            }
+            else
+            {
+                Console.WriteLine("New Config.cs file does not exist.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
 }
