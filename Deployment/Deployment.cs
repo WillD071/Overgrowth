@@ -30,6 +30,10 @@ public class Deployment
                 string parentOutputBinsPath = Path.Combine(parentPath, "Deployment", "DeployBins");
                 foreach (string dir in Directory.GetDirectories(fullPath, "*", SearchOption.AllDirectories))
                 {
+                    if (dir.Contains("DeployTemplate"))
+                    {
+                        continue;
+                    }
                     string iteratedConfigPath = Path.Combine(dir, "Config.cs");
                     (string PrimaryWatchdogName, string SecondaryWatchdogName, string payloadName) binaryNames = GetWatchdogNames(iteratedConfigPath);
 
@@ -42,8 +46,11 @@ public class Deployment
                     ReplaceConfigFile(ConfigFilePath, iteratedConfigPath); // replaces the project's config file with the one for current deploy
                     Directory.CreateDirectory(iteratedOutputBinsPath);
 
+                    string txtFileContent = watchdogInfo.fullPath + "\n\n\n" + "^^PUT ALL THREE FILES IN ABOVE FILEPATH THEN RUN PRIMARY WATCHDOG^^\n\n" + "Payload Name: " + binaryNames.payloadName + ".exe\n" + "Primary Watchdog Name: " + binaryNames.PrimaryWatchdogName + ".exe\n" + "Secondary Watchdog Name: " + binaryNames.SecondaryWatchdogName + ".exe";
+                        
 
-                    File.WriteAllText(Path.Combine(iteratedOutputBinsPath, "DeployPath.txt"), watchdogInfo.fullPath); //write the primary watchdog path to a .txt
+
+                    File.WriteAllText(Path.Combine(iteratedOutputBinsPath, "DeployPath.txt"), txtFileContent); //write the primary watchdog path to a .txt
 
 
                     
