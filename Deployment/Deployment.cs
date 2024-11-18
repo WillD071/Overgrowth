@@ -53,7 +53,9 @@ public class Deployment
                     string[] exeFiles = Directory.GetFiles(dir, "*.exe");
                     string iteratedPayloadPath = exeFiles[0];
 
-                    File.Copy(iteratedPayloadPath, Path.Combine(iteratedOutputBinsPath, binaryNames.payloadName), true);
+                    File.Copy(iteratedPayloadPath, Path.Combine(iteratedOutputBinsPath, binaryNames.payloadName + ".exe"), true);
+
+                    CleanDirectory(iteratedOutputBinsPath, binaryNames.PrimaryWatchdogName, binaryNames.SecondaryWatchdogName, binaryNames.payloadName);
 
                     i++;
                 }
@@ -109,7 +111,10 @@ public class Deployment
     public static void Publish(string projectPath, string outputPath, string assemblyName)
     {
         // Build the dotnet publish arguments
-        var publishArgs = $"publish \"{projectPath}\" -o \"{outputPath}\" -p:AssemblyName={assemblyName}";
+        var publishArgs = $"publish \"{projectPath}\" -o \"{outputPath}\" -p:AssemblyName=\"{assemblyName}\"";
+
+        // Debug: Print the arguments to ensure they are correct
+        Console.WriteLine($"Publish Arguments: {publishArgs}");
 
         // Configure the process start info
         var processInfo = new ProcessStartInfo
@@ -125,28 +130,35 @@ public class Deployment
         // Start the process
         using (var process = new Process { StartInfo = processInfo })
         {
-            process.Start();
-
-            // Read and display output
-            string output = process.StandardOutput.ReadToEnd();
-            string errors = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            Console.WriteLine("Output:");
-            Console.WriteLine(output);
-
-            if (!string.IsNullOrWhiteSpace(errors))
+            try
             {
-                Console.WriteLine("Errors:");
-                Console.WriteLine(errors);
+                process.Start();
+
+                // Read and display output
+                string output = process.StandardOutput.ReadToEnd();
+                string errors = process.StandardError.ReadToEnd();
+
+                process.WaitForExit();
+
+                Console.WriteLine("Output:");
+                Console.WriteLine(output);
+
+                if (!string.IsNullOrWhiteSpace(errors))
+                {
+                    Console.WriteLine("Errors:");
+                    Console.WriteLine(errors);
+                }
+
+                Console.WriteLine($"Publish process exited with code {process.ExitCode}");
             }
-
-            Console.WriteLine($"Publish process exited with code {process.ExitCode}");
-
-          
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error starting process: {ex.Message}");
+            }
         }
     }
+
+
 
     public static (string PrimaryWatchdogName, string SecondaryWatchdogName, string payloadName) GetWatchdogNames(String filePath)
     {
@@ -155,9 +167,9 @@ public class Deployment
         {
             string fileContent = File.ReadAllText(filePath);
             // Regular expressions to match the SecondaryWatchdogName and PrimaryWatchdogName values
-            string secondaryPattern = @"public static string SecondaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)"";";
-            string primaryPattern = @"public static string PrimaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)"";";
-            string payloadPattern = @"public static string PayloadName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)"";";
+            string secondaryPattern = @"public static string SecondaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";";
+            string primaryPattern = @"public static string PrimaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";";
+            string payloadPattern = @"public static string PayloadName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";";
 
 
             // Extract the values using regex
@@ -266,6 +278,46 @@ public class Deployment
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
+
+    public static void CleanDirectory(string directoryPath, string primaryWatchdogName, string secondaryWatchdogName, string payloadName)
+    {
+        try
+        {
+            // Ensure the directory exists
+            if (Directory.Exists(directoryPath))
+            {
+                // Get all files in the directory
+                var files = Directory.GetFiles(directoryPath);
+
+                foreach (var file in files)
+                {
+                    // Get the file name from the path
+                    string fileName = Path.GetFileName(file);
+
+                    // Check if the file should be excluded from deletion
+                    if (fileName != "DeployPath.txt" &&
+                        fileName != primaryWatchdogName + ".exe" &&
+                        fileName != secondaryWatchdogName + ".exe" &&
+                        fileName != payloadName + ".exe")
+                    {
+                        // Delete the file
+                        File.Delete(file);
+                        Console.WriteLine($"Deleted: {file}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"The directory '{directoryPath}' does not exist.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cleaning directory: {ex.Message}");
+        }
+    }
 }
+
+
 
 
