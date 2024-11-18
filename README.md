@@ -25,7 +25,7 @@ by anyone in the future.
    - All the other fields are self explanatory and should be set to unique values
    **Note:** _Please do not choose any of the same values as what is being used in a competition to ensure there is no overlap_
 
-4. **Run `Deployment\Windows Persistence Deploy.exe`
+4. **Run `Deployment\Windows Persistence Deploy.exe`**
    Now that you have created a unique config.cs file and add your desired payload to a folder under `Deployment\Configs\`, run `Deployment\Windows Persistence Deploy.exe`
    
 5. **Deploy!**  
