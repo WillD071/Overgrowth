@@ -8,7 +8,7 @@ class Watchdog
 
         using (Mutex mutex = new Mutex(false, "Global\\" + Config.PrimaryWatchdogMutexName, out bool isNewInstance))
         {
-            bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
+            bool isAdmin = watchdogHelper.IsRunningAsAdministrator(); 
 
             if (!isNewInstance && isAdmin)
             {

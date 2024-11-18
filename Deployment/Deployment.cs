@@ -8,21 +8,54 @@ public class Deployment
 {
     public static void Main(string[] args)
     {
-        string primaryWatchdogProject = "Watchdog/Watchdog.csproj";
-        string secondaryWatchdogProject = "Watchdog/Watchdog2.csproj";
+        switchToDeploymentFolder();
 
         try
         {
+            string? parentPath = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName; //       \WindowsPersistence\ Folder
+            string DeploymentPath = Path.Combine(parentPath, "Deployment", "DeployBins");
+
+
+            Directory.Delete(DeploymentPath, true); // deletes the old deployment
+            Directory.CreateDirectory(DeploymentPath); // Creates new deployment folder
+
             string relativePath = Path.Combine(Directory.GetCurrentDirectory(), "Configs");
-            string fullPath = Path.GetFullPath(relativePath);
+            string fullPath = Path.GetFullPath(relativePath); // \Deployment\Configs\ Folder for the iterator
             if (Directory.Exists(fullPath))
-            {
-                string? parentPath = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
+            {  
+                int i = 1;
+                string primaryWatchDogProjectPath = Path.Combine(parentPath, "PrimaryWatchdog", "PrimaryWatchdog.csproj");
+                string secondaryWatchDogProjectPath = Path.Combine(parentPath, "SecondaryWatchdog", "SecondaryWatchdog.csproj");
+                string ConfigFilePath = Path.Combine(parentPath, "Config.cs");
+                string parentOutputBinsPath = Path.Combine(parentPath, "Deployment", "DeployBins");
                 foreach (string dir in Directory.GetDirectories(fullPath, "*", SearchOption.AllDirectories))
                 {
-                    ReplaceConfigFile( Path.Combine(parentPath, "Config.cs"), Path.Combine(dir, "Config.cs"));
-                    Publish(Path.Combine(parentPath, "PrimaryWatchdog", "PrimaryWatchdog.csproj"), );
+                    string iteratedConfigPath = Path.Combine(dir, "Config.cs");
+                    (string PrimaryWatchdogName, string SecondaryWatchdogName, string payloadName) binaryNames = GetWatchdogNames(iteratedConfigPath);
 
+
+                    (string fullPath, string lastDirectory) watchdogInfo = GetPrimaryWatchdogPathInfo(iteratedConfigPath);
+                    string dirName = "Deployment" + i + "To-" + watchdogInfo.lastDirectory;
+
+                    string iteratedOutputBinsPath = Path.Combine(parentPath, "Deployment", "DeployBins", dirName);
+
+                    ReplaceConfigFile(ConfigFilePath, iteratedConfigPath); // replaces the project's config file with the one for current deploy
+                    Directory.CreateDirectory(iteratedOutputBinsPath);
+
+
+                    File.WriteAllText(Path.Combine(iteratedOutputBinsPath, "DeployPath.txt"), watchdogInfo.fullPath); //write the primary watchdog path to a .txt
+
+
+                    
+                    Publish(primaryWatchDogProjectPath, iteratedOutputBinsPath, binaryNames.PrimaryWatchdogName);
+                    Publish(secondaryWatchDogProjectPath, iteratedOutputBinsPath, binaryNames.SecondaryWatchdogName);
+
+                    string[] exeFiles = Directory.GetFiles(dir, "*.exe");
+                    string iteratedPayloadPath = exeFiles[0];
+
+                    File.Copy(iteratedPayloadPath, Path.Combine(iteratedOutputBinsPath, binaryNames.payloadName), true);
+
+                    i++;
                 }
             }
             else
@@ -38,7 +71,42 @@ public class Deployment
     }
 
 
-    public static void Publish(string projectPath, string outputPath, string assemblyName, string configPath)
+    public static void switchToDeploymentFolder()
+    {
+        try
+        {
+            string targetFolderName = "Deployment";
+
+            while (true)
+            {
+                string currentDirectory = Environment.CurrentDirectory; // Get the current directory
+                string folderName = new DirectoryInfo(currentDirectory).Name;
+
+                if (string.Equals(folderName, targetFolderName, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"Found the target folder: {currentDirectory}");
+                    break;
+                }
+
+                DirectoryInfo parentDirectory = Directory.GetParent(currentDirectory);
+
+                if (parentDirectory == null)
+                {
+                    Console.WriteLine("Reached the root directory. Target folder not found.");
+                    break;
+                }
+
+                Environment.CurrentDirectory = parentDirectory.FullName; // Change the current directory to the parent
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+
+
+    public static void Publish(string projectPath, string outputPath, string assemblyName)
     {
         // Build the dotnet publish arguments
         var publishArgs = $"publish \"{projectPath}\" -o \"{outputPath}\" -p:AssemblyName={assemblyName}";
@@ -76,28 +144,11 @@ public class Deployment
 
             Console.WriteLine($"Publish process exited with code {process.ExitCode}");
 
-            // Copy Config.cs to the output directory
-            if (File.Exists(configPath))
-            {
-                try
-                {
-                    string destinationConfigPath = Path.Combine(outputPath, "Config.cs");
-                    File.Copy(configPath, destinationConfigPath, overwrite: true);
-                    Console.WriteLine($"Config.cs copied to {destinationConfigPath}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error copying Config.cs: {ex.Message}");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Config.cs not found at the specified path.");
-            }
+          
         }
     }
 
-    public static string[]? GetWatchdogNames(String filePath)
+    public static (string PrimaryWatchdogName, string SecondaryWatchdogName, string payloadName) GetWatchdogNames(String filePath)
     {
 
         try
@@ -106,10 +157,13 @@ public class Deployment
             // Regular expressions to match the SecondaryWatchdogName and PrimaryWatchdogName values
             string secondaryPattern = @"public static string SecondaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)"";";
             string primaryPattern = @"public static string PrimaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)"";";
+            string payloadPattern = @"public static string PayloadName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)"";";
+
 
             // Extract the values using regex
             var secondaryMatch = Regex.Match(fileContent, secondaryPattern);
             var primaryMatch = Regex.Match(fileContent, primaryPattern);
+            var payloadMatch = Regex.Match(fileContent, payloadPattern);
 
             if (secondaryMatch.Success)
             {
@@ -129,12 +183,21 @@ public class Deployment
                 Console.WriteLine("PrimaryWatchdogName not found.");
             }
 
-            return [secondaryMatch.Groups[1].Value, primaryMatch.Groups[1].Value];
+            if (payloadMatch.Success)
+            {
+                Console.WriteLine("payloadName: " + payloadMatch.Groups[1].Value);
+            }
+            else
+            {
+                Console.WriteLine("payloadName not found.");
+            }
+
+            return (primaryMatch.Groups[1].Value, secondaryMatch.Groups[1].Value, payloadMatch.Groups[1].Value);
         }
         catch (Exception ex)
         {
             Console.WriteLine("Error reading the file: " + ex.Message);
-           return null;
+           return (null, null, null);
         }
     }
 

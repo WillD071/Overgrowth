@@ -10,7 +10,6 @@
 	  <PublishSingleFile>true</PublishSingleFile>
 	  <EnableComInterop>true</EnableComInterop>
 	  <PublishTrimmed>true</PublishTrimmed>
-	  <ApplicationManifest>app.manifest</ApplicationManifest>
 	  <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

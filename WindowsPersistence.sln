@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimaryWatchdog", "PrimaryW
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecondaryWatchdog", "SecondaryWatchdog\SecondaryWatchdog.csproj", "{8111A04C-DE17-4A2B-B410-2740C851660B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deployment", "Deployment\Deployment.csproj", "{6B2E4E6F-201D-496E-8BDD-C36C3D1BE962}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Deployment", "Deployment\Deployment.csproj", "{6B2E4E6F-201D-496E-8BDD-C36C3D1BE962}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +36,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6B2E4E6F-201D-496E-8BDD-C36C3D1BE962} = {3DC13807-F0D5-46E7-AA32-27A10E093D02}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43FBE7E9-1B78-4CC3-8CA1-1668A7C2B0A6}
