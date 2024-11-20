@@ -4,11 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
-    public class GenerateScripts
+public class WatchdogInfo
+{
+    public string DirectoryPath { get; set; }
+    public string PayloadName { get; set; }
+    public string PrimaryWatchdogName { get; set; }
+    public string SecondaryWatchdogName { get; set; }
+}
+public class GenerateScripts
     {
+    public static List<WatchdogInfo> WatchdogDatabase { get; private set; } = new List<WatchdogInfo>();
 
-        public static void makeDeployFiles(string configPath, string OutputBins)
+    public static void makeDeployFiles(string configPath, string OutputBins)
         {
             Directory.Delete(configPath);
             Directory.CreateDirectory(configPath);
@@ -36,7 +43,46 @@ using System.Threading.Tasks;
     }
     public static void extractBinaryInfo(string outputBins)
     {
+        string[] directories = Directory.GetDirectories(outputBins);
 
+        foreach (string directory in directories)
+        {
+            string txtFilePath = Path.Combine(directory, "DeployPath.txt"); // Assuming the text file is named 'file.txt'
+            if (File.Exists(txtFilePath))
+            {
+                // Read the content of the .txt file
+                string[] lines = File.ReadAllLines(txtFilePath);
+
+                // Create a WatchdogInfo object to store the extracted data
+                WatchdogInfo watchdogInfo = new WatchdogInfo
+                {
+                    DirectoryPath = directory,
+                    PayloadName = ExtractInfo(lines, "Payload Name:"),
+                    PrimaryWatchdogName = ExtractInfo(lines, "Primary Watchdog Name:"),
+                    SecondaryWatchdogName = ExtractInfo(lines, "Secondary Watchdog Name:")
+                };
+
+                // Add the WatchdogInfo object to the static list
+                WatchdogDatabase.Add(watchdogInfo);
+            }
+            else
+            {
+                Console.WriteLine($"File not found in directory: {directory}");
+            }
+        }
+
+    }
+
+    static string ExtractInfo(string[] lines, string prefix)
+    {
+        foreach (string line in lines)
+        {
+            if (line.StartsWith(prefix))
+            {
+                return line.Substring(prefix.Length).Trim();
+            }
+        }
+        return string.Empty;
     }
     private static void CopyFilesRecursively(string sourceDir, string targetDir)
     {
