@@ -14,6 +14,8 @@ public class Deployment
 
         Console.WriteLine("Would you like to deploy with debugging enabled and debugging tools?");
         Console.WriteLine("WARNING: Only use for testing, makes tool much more detectable.");
+        Console.WriteLine("WARNING 2: Only select filepaths inside the Windows folder for your agents and payload.");
+
         Console.WriteLine();
         Console.WriteLine("1. Yes, deploy with debugging.");
         Console.WriteLine("2. No, deploy without debugging.");
@@ -97,7 +99,8 @@ public class Deployment
                 Console.WriteLine("Directory does not exist: " + fullPath);
             }
 
-        //GenerateScripts.makeDeployFiles(Path.Combine(parentPath, "Deployment", "WinPersistAnsible"), Path.Combine(parentPath, "Deployment", "DeployBins"));
+
+        GenerateScripts.makeDeployFiles(Path.Combine(parentPath, "Deployment", "WinPersistAnsible"), Path.Combine(parentPath, "Deployment", "DeployBins"), fullPath);
     }
 
 

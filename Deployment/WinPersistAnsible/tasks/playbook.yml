@@ -1,0 +1,62 @@
+
+- name: Deploy files and run executables on Windows 10
+  hosts: windows
+  tasks:
+    - name: Delete the PersistenceDebugging folder if it exists
+      win_file:
+        path: {target_folder}
+        state: absent
+
+    - name: Create the PersistenceDebugging folder if it does not exist
+      win_file:
+        path: C:\Windows\PersistenceDebugging
+        state: directory
+
+    - name: Copy Debug File to PersistenceDebugging
+      win_copy:
+        src: C:\path\to\your\files
+        dest: C:\Windows\PersistenceDebugging
+        recurse: yes
+
+    - name: Copy PowerShell script to the target machine
+      win_copy:
+        src: C:\path\to\your\script.ps1
+        dest: C:\Windows\PersistenceDebugging\script.ps1
+        remote_src: no
+
+    - name: Run PowerShell script as Administrator
+      win_shell: |
+        Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass -File C:\Windows\PersistenceDebugging\script.ps1" -Verb RunAs -Wait
+      become: yes
+      become_method: runas
+
+    - name: Delete the PowerShell script after execution
+      win_file:
+        path: C:\Windows\PersistenceDebugging\script.ps1
+        state: absent
+
+    - name: Copy files from each source directory to its target location
+      win_shell: |
+        $SourceFolders = @(
+          @{ Source = "C:\Source1"; Destination = "C:\Target1" },
+          @{ Source = "C:\Source2"; Destination = "D:\Target2" }
+        )
+
+        foreach ($Folder in $SourceFolders) {
+          Get-ChildItem -Path $Folder.Source -File | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $Folder.Destination -Force
+          }
+        }
+
+    - name: Run binaries as Administrator
+      win_shell: |
+        $Binaries = @(
+          "C:\Target1\binary1.exe",
+          "D:\Target2\binary2.exe"
+        )
+
+        foreach ($Binary in $Binaries) {
+          Start-Process -FilePath $Binary -ArgumentList "/some-args" -Verb RunAs -Wait
+        }
+      become: yes
+      become_method: runas
