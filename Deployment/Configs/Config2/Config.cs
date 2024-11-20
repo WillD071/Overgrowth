@@ -1,6 +1,6 @@
-﻿public class Config // This is for Binary 1
+public class Config // This is for Binary 1
 {
-    public static bool Debugging { get; private set; } = true; //Set to true for debugging messages and logs
+    public static bool Debugging { get; private set; } = true ; //Set to true for debugging messages and logs
     public static int sleepTime { get; private set; } = 46000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
                                                                // used 46 seconds for UB lockdown deploy. Lower time increases the strength of the persistence
     public static int[] PortsToKeepOpen { get; private set; } = new int[] { 80, 443, 53 }; // Ports to keep open

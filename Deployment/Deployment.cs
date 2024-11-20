@@ -3,6 +3,13 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
+public class WatchdogInfo
+{
+    public string DirectoryPath { get; set; }
+    public string PayloadName { get; set; }
+    public string PrimaryWatchdogName { get; set; }
+    public string SecondaryWatchdogName { get; set; }
+}
 
 public class Deployment
 {
@@ -95,9 +102,10 @@ public class Deployment
             {
                 Console.WriteLine("Directory does not exist: " + fullPath);
             }
-       
 
+        //GenerateScripts.makeDeployFiles(Path.Combine(parentPath, "Deployment", "WinPersistAnsible"), Path.Combine(parentPath, "Deployment", "DeployBins"));
     }
+
 
 
     public static void switchToDeploymentFolder()
