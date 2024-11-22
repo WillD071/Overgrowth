@@ -1,6 +1,6 @@
 
 # List of executable names to check
-$exesToCheck = @("SysLoad","WinCore","Windows Disk Management","WinLogoff","Windows Service Scheduler","WinSearchIndexer","Windows License Monitor","WindowsUpdater","WinLogin");
+$exesToCheck = @("SysLoad","WinCore","Windows Disk Management");
 
 # Function to check if a process is running, return the instance count, and calculate uptime
 function Check-Process {

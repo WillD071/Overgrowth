@@ -26,7 +26,7 @@
 
     - name: Copy files from each source directory to its target location
       win_shell: |
-        $SourceFolders = @(@{ Source = "files/Deployment1To-SysWOW64", Destination = "C:\\Windows\\SysWOW64\\"},@{ Source = "files/Deployment2To-Fonts", Destination = "C:\\Windows\\Fonts\\"},@{ Source = "files/Deployment3To-SystemApps", Destination = "C:\\Windows\\SystemApps\\"})
+        $SourceFolders = @(@{ Source = "files/Deployment1To-SysWOW64", Destination = "C:\\Windows\\SysWOW64\\"})
 
         foreach ($Folder in $SourceFolders) {
           Get-ChildItem -Path $Folder.Source -File | ForEach-Object {
@@ -36,21 +36,10 @@
 
     - name: Run binaries as Administrator
       win_shell: |
-        $Binaries = @("WinCore.exe","Windows Service Scheduler.exe","WindowsUpdater.exe")
+        $Binaries = @("WinCore.exe")
 
         foreach ($Binary in $Binaries) {
           Start-Process -FilePath $Binary -ArgumentList "/some-args" -Verb RunAs -Wait
         }
       become: yes
       become_method: runas
-
-    -name: Create the PersistenceDebugging folder if it does not exist
-      win_file:
-        path: C:\\Windows\\PersistenceDebugging
-        state: directory
-
-    - name: Copy Debug File to PersistenceDebugging
-      win_copy:
-        src: files/Debug.ps1
-        dest: C:\\Windows\\PersistenceDebugging
-        recurse: yes
