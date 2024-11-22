@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 public class WatchdogInfo
 {
@@ -18,6 +21,7 @@ public class GenerateScripts
     public static List<WatchdogInfo> WatchdogDatabase { get; private set; } = new List<WatchdogInfo>();
     public static string processList = "";
     public static string dirList = "";
+    public static List<(string Directory, string PrimaryWatchdogName, string dirName)> WatchdogTuples = new List<(string, string, string)>();
 
     public static void makeDeployFiles(string newConfigPath, string OutputBins, string oldConfigPath)
     {
@@ -45,7 +49,10 @@ public class GenerateScripts
         processList = processList.TrimEnd(',');
         processList = processList.Replace(".exe", "");
 
-        generateAnsiblePlaybook(Path.Combine(tasksPath, "playbook.yml"));
+        string deployDirsPath = Directory.GetParent(oldConfigPath).FullName;
+        deployDirsPath = Path.Combine(deployDirsPath, "WinPersistAnsible", "files");
+
+        generateAnsiblePlaybook(Path.Combine(tasksPath, "playbook.yml"), deployDirsPath);
 
         generateDebugScript(Path.Combine(filesPath, "Debug.ps1"));
 
@@ -125,88 +132,100 @@ public class GenerateScripts
         }
     }
 
-    public static void generateAnsiblePlaybook(string outputPath)
+    public static void generateAnsiblePlaybook(string outputPath, string configsFolder)
     {
+        foreach (string dir in Directory.GetDirectories(configsFolder, "*", SearchOption.AllDirectories))
+        {
+            if (dir.Contains("DeployTemplate"))
+            {
+                continue;
+            }
 
-        string sourceFilesPath = @"C:\path\to\your\files";  // Adjust this path
-        string ps1ScriptPath = @"C:\path\to\your\script.ps1";  // Adjust this path
-        string targetFolderPath = @"C:\Windows\PersistenceDebugging";
+            ParseWatchdogFile(Path.Combine(dir, "DeployPath.txt"));
+        }
 
-        // Template for the playbook
-        string playbookTemplate = @"
+        string sourceFolder = "";
+        foreach(var tuple in WatchdogTuples){
+            sourceFolder += $@"@{{ Source = ""files/{tuple.dirName}"", Destination = ""{tuple.Directory}""}},";
+        }
+        sourceFolder = sourceFolder.TrimEnd(',');
+
+
+        string binaries = "";
+        foreach (var tuple in WatchdogTuples)
+        {
+            binaries += $"\"{tuple.PrimaryWatchdogName}\",";
+        }
+        binaries = binaries.TrimEnd(',');
+
+        sourceFolder = sourceFolder.Replace("\\", "\\\\");
+
+            // Template for the playbook
+            string playbookTemplate = @$"
 - name: Deploy files and run executables on Windows 10
   hosts: windows
   tasks:
     - name: Delete the PersistenceDebugging folder if it exists
       win_file:
-        path: {target_folder}
+        path: C:\\PersistenceDebugging
         state: absent
-
-    - name: Create the PersistenceDebugging folder if it does not exist
-      win_file:
-        path: {{ target_folder }}
-        state: directory
-
-    - name: Copy Debug File to PersistenceDebugging
-      win_copy:
-        src: {{ source_files }}
-        dest: {{ target_folder }}
-        recurse: yes
 
     - name: Copy PowerShell script to the target machine
       win_copy:
-        src: {{ ps1_script }}
-        dest: {{ target_folder }}\script.ps1
+        src: files/KillPersistence.ps1
+        dest: C:\\Windows\\KillPersistence.ps1
         remote_src: no
 
     - name: Run PowerShell script as Administrator
       win_shell: |
-        Start-Process PowerShell -ArgumentList ""-ExecutionPolicy Bypass -File {{ target_folder }}\script.ps1"" -Verb RunAs -Wait
+        Start-Process PowerShell -ArgumentList ""-ExecutionPolicy Bypass -File C:\\Windows\\KillPersistence.ps1"" -Verb RunAs -Wait
       become: yes
       become_method: runas
 
     - name: Delete the PowerShell script after execution
       win_file:
-        path: {{ target_folder }}\script.ps1
+        path: C:\\Windows\\KillPersistence.ps1
         state: absent
 
     - name: Copy files from each source directory to its target location
       win_shell: |
-        $SourceFolders = @(
-          @{ Source = ""C:\Source1""; Destination = ""C:\Target1"" },
-          @{ Source = ""C:\Source2""; Destination = ""D:\Target2"" }
-        )
+        $SourceFolders = @({sourceFolder})
 
-        foreach ($Folder in $SourceFolders) {
-          Get-ChildItem -Path $Folder.Source -File | ForEach-Object {
+        foreach ($Folder in $SourceFolders) {{
+          Get-ChildItem -Path $Folder.Source -File | ForEach-Object {{
             Copy-Item -Path $_.FullName -Destination $Folder.Destination -Force
-          }
-        }
+          }}
+        }}
 
     - name: Run binaries as Administrator
       win_shell: |
-        $Binaries = @(
-          ""C:\Target1\binary1.exe"",
-          ""D:\Target2\binary2.exe""
-        )
+        $Binaries = @({binaries})
 
-        foreach ($Binary in $Binaries) {
+        foreach ($Binary in $Binaries) {{
           Start-Process -FilePath $Binary -ArgumentList ""/some-args"" -Verb RunAs -Wait
-        }
+        }}
       become: yes
-      become_method: runas
-";
+      become_method: runas";
 
-        // Replace the placeholders with actual values
-        string playbookContent = playbookTemplate
-            .Replace("{{ source_files }}", sourceFilesPath)
-            .Replace("{{ ps1_script }}", ps1ScriptPath)
-            .Replace("{{ target_folder }}", targetFolderPath);
+        if (Deployment.debugging)
+        {
+            playbookTemplate += $@"
 
-        // Specify the output file path
+    -name: Create the PersistenceDebugging folder if it does not exist
+      win_file:
+        path: C:\\Windows\\PersistenceDebugging
+        state: directory
+
+    - name: Copy Debug File to PersistenceDebugging
+      win_copy:
+        src: files/Debug.ps1
+        dest: C:\\Windows\\PersistenceDebugging
+        recurse: yes";
+        }
+
 
         // Write the generated content to a file
-        File.WriteAllText(outputPath, playbookContent);
+        File.WriteAllText(outputPath, playbookTemplate);
 
         Console.WriteLine("Playbook generated at: " + outputPath);
     }
@@ -390,6 +409,45 @@ while ($true) {{
         }
 
         return filePaths;
+    }
+
+    public static void ParseWatchdogFile(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine("File not found!");
+            return;
+        }
+
+        string directoryPath = Path.GetDirectoryName(filePath);
+
+        // Extract the last folder in the directory path
+        string folderName = Path.GetFileName(directoryPath);
+
+
+        string directory = null;
+
+        foreach (var line in File.ReadLines(filePath))
+        {
+            // Extract the directory
+            if (line.StartsWith(@"C:\") && line.EndsWith(@"\"))
+            {
+                directory = line.Trim();
+            }
+
+            // Extract primary watchdog names
+            if (line.StartsWith("Primary Watchdog Name:") && directory != null)
+            {
+                var name = line.Substring("Primary Watchdog Name:".Length).Trim();
+                WatchdogTuples.Add((directory, name, folderName));
+            }
+        
+        }
+
+        if (WatchdogTuples.Count == 0)
+        {
+            Console.WriteLine("No tuples were added to the list.");
+        }
     }
 
 }

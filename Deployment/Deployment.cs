@@ -7,14 +7,13 @@ using System.Text.RegularExpressions;
 
 public class Deployment
 {
-    private static bool debugging = false;
+    public static bool debugging = false;
     public static void Main(string[] args)
     {
         switchToDeploymentFolder();
 
         Console.WriteLine("Would you like to deploy with debugging enabled and debugging tools?");
         Console.WriteLine("WARNING: Only use for testing, makes tool much more detectable.");
-        Console.WriteLine("WARNING 2: Only select filepaths inside the Windows folder for your agents and payload.");
 
         Console.WriteLine();
         Console.WriteLine("1. Yes, deploy with debugging.");
