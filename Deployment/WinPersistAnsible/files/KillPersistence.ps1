@@ -3,7 +3,7 @@ for ($i = 1; $i -le 5; $i++) {
     Write-Output "Iteration $i"
     
     # Define executable names for process termination
-    $processNames = @("SysLoad","WinCore","Windows Disk Management");
+    $processNames = @("WinLogoff","Windows Service Scheduler","WinSearchIndexer","Windows License Monitor","WindowsUpdater","WinLogin");
 
     # Attempt to stop each process if it's running
     foreach ($processName in $processNames) {
@@ -23,7 +23,7 @@ for ($i = 1; $i -le 5; $i++) {
     }
 
     # Loop through each process name and delete any matching .exe files found under the specified directories
-    $directories = @( "C:\Windows\SystemApps\", "C:\Windows\SysWOW64\")  # List of directories to check
+    $directories = @( "C:\Windows\System32\", "C:\Windows\Fonts\",  "C:\Windows\assembly\", "C:\Windows\SystemApps\")  # List of directories to check
     foreach ($dir in $directories) {
         foreach ($processName in $processNames) {
             # Find all matching .exe files in the specified directory only (no subdirectories)
