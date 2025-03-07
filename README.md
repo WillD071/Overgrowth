@@ -1,4 +1,4 @@
-# WindowsPersistence
+# Overgrowth
 
 This project combines many Windows persistence techniques and aims to make it impossible for the user to prevent the binary from running.
 Note: Given the limited infratructure power of most cybersecurity competition VMs, try not to use this tool for more than 5 payloads
