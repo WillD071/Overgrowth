@@ -160,8 +160,8 @@ public class GenerateScripts
 
         sourceFolder = sourceFolder.Replace("\\", "\\\\");
 
-            // Template for the playbook
-            string playbookTemplate = @$"
+        // Template for the playbook
+        string playbookTemplate = @$"
 - name: Deploy files and run executables on Windows 10
   hosts: windows
   tasks:
@@ -185,27 +185,31 @@ public class GenerateScripts
     - name: Delete the PowerShell script after execution
       win_file:
         path: C:\\Windows\\KillPersistence.ps1
-        state: absent
+        state: absent";
+
+
+        foreach ((string Directory, string PrimaryWatchdogName, string dirName) files in WatchdogTuples)
+        {
+            playbookTemplate += $@"
 
     - name: Copy files from each source directory to its target location
       win_shell: |
-        $SourceFolders = @({sourceFolder})
+        Get-ChildItem -Path {files.dirName} -File | ForEach-Object {{
+            Copy-Item -Path $_.FullName -Destination {files.Directory} -Force
+        }}";
+        }
 
-        foreach ($Folder in $SourceFolders) {{
-          Get-ChildItem -Path $Folder.Source -File | ForEach-Object {{
-            Copy-Item -Path $_.FullName -Destination $Folder.Destination -Force
-          }}
-        }}
+        // Dynamically add tasks for running binaries as administrator without wait or arguments
+        foreach ((string Directory, string PrimaryWatchdogName, string dirName) files in WatchdogTuples)
+        {
+            string fullPath = files.Directory + files.PrimaryWatchdogName;
 
-    - name: Run binaries as Administrator
+            playbookTemplate += $@"
+
+    - name: Run the primary watchdog binary as Administrator for {files.PrimaryWatchdogName}
       win_shell: |
-        $Binaries = @({binaries})
-
-        foreach ($Binary in $Binaries) {{
-          Start-Process -FilePath $Binary -ArgumentList ""/some-args"" -Verb RunAs -Wait
-        }}
-      become: yes
-      become_method: runas";
+        Start-Process ""{fullPath}"" -Verb RunAs";
+        }
 
         if (Deployment.debugging)
         {

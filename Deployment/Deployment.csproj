@@ -19,6 +19,9 @@
     <Compile Remove="Configs\Config1\Config.cs" />
     <Compile Remove="Configs\Config2\Config.cs" />
     <Compile Remove="Configs\Config3\Config.cs" />
+    <Compile Remove="Configs\DeployTemplate\Config.cs" />
+    <Compile Remove="Configs\DeployTemplate\Config2\Config.cs" />
+    <Compile Remove="Configs\DeployTemplate\Config3\Config.cs" />
   </ItemGroup>
 
   <ItemGroup>
