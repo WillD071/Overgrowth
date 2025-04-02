@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using NetFwTypeLib;
 
 
-    public class watchdogHelper
+public class watchdogHelper
     {
 
         private static bool IsMutexRunning(string mutexName)

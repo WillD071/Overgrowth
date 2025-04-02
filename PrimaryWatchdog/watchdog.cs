@@ -20,9 +20,8 @@ class Watchdog
                 if (PID.HasValue)
                 {
                     string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
-                    // rest of your code here
 
-                    if (permissionLevel != "Administrator")
+                    if (permissionLevel != "Administrator") // Possible issue - handle other levels of privledge
                     {
                         watchdogHelper.Log("Killing lower privledged process.");
                         watchdogHelper.KillProcessById((int)PID);
