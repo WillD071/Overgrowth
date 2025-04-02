@@ -105,6 +105,54 @@ using System.Security.Principal;
         }
         }
 
+        public static void EnsureHighestPriv(bool isNewInstance)
+        {
+        bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
+
+        if (!isNewInstance && isAdmin)
+        {
+
+            watchdogHelper.Log("Another instance of the watchdog is already running.");
+
+            int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
+
+            if (PID.HasValue)
+            {
+                string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
+                // rest of your code here
+
+                if (permissionLevel != "Administrator")
+                {
+                    watchdogHelper.Log("Killing lower privledged process.");
+                    watchdogHelper.KillProcessById((int)PID);
+                }
+                else
+                {
+                    Environment.Exit(0);
+                }
+            }
+            else
+            {
+                // handle the case when PID is null
+                watchdogHelper.Log("Failed to get process ID.");
+                Environment.Exit(0);
+            }
+        }
+        else if (!isNewInstance)
+        {
+            Environment.Exit(0);
+        }
+
+        // Call the main watchdog logic
+        if (isNewInstance)
+        {
+            return;
+        }
+        else
+        {
+            Environment.Exit(0);
+        }
+        }
 
         private static void runBinary(string filePath, string arguments = "")
         {
