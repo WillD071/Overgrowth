@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
-using NetFwTypeLib;
+using WindowsFirewallHelper;
 
 
 public class watchdogHelper
@@ -303,11 +303,12 @@ public class watchdogHelper
     public static void OpenFirewallPort(int port, string ruleName)
     {
         string ruleFullName = ruleName + port;
+        var firewall = FirewallManager.Instance;
 
         if (!RuleExists(ruleFullName))
         {
-            AddRule(ruleFullName, port, 1); // 1 = Inbound
-            AddRule(ruleFullName, port, 2); // 2 = Outbound
+            AddRule(ruleFullName, port, FirewallDirection.Inbound);
+            AddRule(ruleFullName, port, FirewallDirection.Outbound);
         }
         else
         {
@@ -317,67 +318,41 @@ public class watchdogHelper
 
     private static bool RuleExists(string ruleName)
     {
-        try
+        var firewall = FirewallManager.Instance;
+        foreach (var rule in firewall.Rules)
         {
-            dynamic policy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-            foreach (dynamic rule in policy.Rules)
+            if (rule.Name == ruleName)
             {
-                if (rule.Name == ruleName)
-                {
-                    return true;
-                }
+                return true;
             }
-        }
-        catch (COMException ex)
-        {
-            Console.WriteLine("Error accessing firewall policy: " + ex.Message);
         }
         return false;
     }
 
-    private static void AddRule(string ruleName, int port, int direction)
+    private static void AddRule(string ruleName, int port, FirewallDirection direction)
     {
-        try
-        {
-            dynamic policy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-            dynamic rule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
-
-            rule.Name = ruleName;
-            rule.Protocol = 6; // TCP
-            rule.LocalPorts = port.ToString();
-            rule.Direction = direction;
-            rule.Action = 1; // Allow
-            rule.Enabled = true;
-
-            policy.Rules.Add(rule);
-        }
-        catch (COMException ex)
-        {
-            Console.WriteLine("Error adding firewall rule: " + ex.Message);
-        }
+        var firewall = FirewallManager.Instance;
+        var rule = firewall.CreatePortRule(ruleName, FirewallAction.Allow, (ushort)port, FirewallProtocol.TCP);
+        rule.Direction = direction;
+        rule.Is = true;
+        firewall.Rules.Add(rule);
     }
 
     private static void EnableRuleIfDisabled(string ruleName)
     {
-        try
+        var firewall = FirewallManager.Instance;
+        foreach (var rule in firewall.Rules)
         {
-            dynamic policy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
-            foreach (dynamic rule in policy.Rules)
+            if (rule.Name == ruleName && !rule.IsEnable)
             {
-                if (rule.Name == ruleName && !rule.Enabled)
-                {
-                    rule.Enabled = true;
-                }
+                rule.IsEnable = true;
             }
-        }
-        catch (COMException ex)
-        {
-            Console.WriteLine("Error modifying firewall rule: " + ex.Message);
         }
     }
 
 
-    public static int? GetProcessIdByName(string processName)
+
+public static int? GetProcessIdByName(string processName)
         {
         try
         {

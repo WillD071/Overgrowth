@@ -24,6 +24,7 @@
 	  <PackageReference Include="Cake.Powershell" Version="4.0.0" />
 	  <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
 	  <PackageReference Include="System.Management" Version="8.0.0" />
+	  <PackageReference Include="WindowsFirewallHelper" Version="2.2.0.86" />
 	</ItemGroup>
 
 </Project>
