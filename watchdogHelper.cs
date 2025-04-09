@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using NetFwTypeLib;
 
 
-    public class watchdogHelper
+public class watchdogHelper
     {
 
         private static bool IsMutexRunning(string mutexName)
@@ -301,147 +302,82 @@ using System.Security.Principal;
 
     public static void OpenFirewallPort(int port, string ruleName)
     {
-        try
+        string ruleFullName = ruleName + port;
+
+        if (!RuleExists(ruleFullName))
         {
-            string outboundRuleName = ruleName + "Outbound";
-
-            // PowerShell command to check if the rule exists and is enabled
-            string checkInboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{ruleName}' -ErrorAction SilentlyContinue | Select-Object Enabled";
-            string checkOutboundRuleCmd = $"Get-NetFirewallRule -DisplayName '{outboundRuleName}' -ErrorAction SilentlyContinue | Select-Object Enabled";
-
-            // PowerShell commands to add the rule if it doesn't exist
-            string addInboundRuleCmd = $"New-NetFirewallRule -DisplayName '{ruleName}' -Direction Inbound -Protocol TCP -LocalPort {port} -Action Allow";
-            string addOutboundRuleCmd = $"New-NetFirewallRule -DisplayName '{outboundRuleName}' -Direction Outbound -Protocol TCP -LocalPort {port} -Action Allow";
-
-            // PowerShell commands to enable the rule if it exists but is disabled
-            string enableInboundRuleCmd = $"Set-NetFirewallRule -DisplayName '{ruleName}' -Enabled True";
-            string enableOutboundRuleCmd = $"Set-NetFirewallRule -DisplayName '{outboundRuleName}' -Enabled True";
-
-            // Check the inbound rule
-            bool inboundRuleExists = ExecutePowerShellCommand(checkInboundRuleCmd);
-            if (inboundRuleExists)
-            {
-                bool inboundRuleEnabled = CheckRuleEnabledStatus(checkInboundRuleCmd);
-                if (!inboundRuleEnabled)
-                {
-                    ExecutePowerShellCommand(enableInboundRuleCmd);
-                }
-            }
-            else
-            {
-                ExecutePowerShellCommand(addInboundRuleCmd);
-            }
-
-            // Check the outbound rule
-            bool outboundRuleExists = ExecutePowerShellCommand(checkOutboundRuleCmd);
-            if (outboundRuleExists)
-            {
-                bool outboundRuleEnabled = CheckRuleEnabledStatus(checkOutboundRuleCmd);
-                if (!outboundRuleEnabled)
-                {
-                    ExecutePowerShellCommand(enableOutboundRuleCmd);
-                }
-            }
-            else
-            {
-                ExecutePowerShellCommand(addOutboundRuleCmd);
-            }
+            AddRule(ruleFullName, port, 1); // 1 = Inbound
+            AddRule(ruleFullName, port, 2); // 2 = Outbound
         }
-        catch (Exception ex)
+        else
         {
-            watchdogHelper.Log($"Error Modifying firewall with powershell: {ex.Message}");
+            EnableRuleIfDisabled(ruleFullName);
         }
     }
 
-    // Helper method to check if a rule is enabled
-    private static bool CheckRuleEnabledStatus(string checkRuleCmd)
-    {
-        string? result = ExecutePowerShellCommandWithOutput(checkRuleCmd);
-        
-        if(result == null)
-        {
-            return true;
-        }
-        return result.Contains("True");
-    }
-
-    private static bool ExecutePowerShellCommand(string command)
+    private static bool RuleExists(string ruleName)
     {
         try
         {
-            using (Process process = new Process())
+            dynamic policy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+            foreach (dynamic rule in policy.Rules)
             {
-                process.StartInfo.FileName = "powershell.exe";
-                process.StartInfo.Arguments = $"-Command \"{command}\"";
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-
-                process.Start();
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
+                if (rule.Name == ruleName)
                 {
-                    watchdogHelper.Log($"Error in output of powershell command:[{command} {process.StandardError.ReadToEnd() }");
-                    return false;
+                    return true;
                 }
-
-                return true;
             }
         }
-        catch (Exception ex)
+        catch (COMException ex)
         {
-            watchdogHelper.Log("Error Running powershell command: " + ex.Message);
-            return false;
+            Console.WriteLine("Error accessing firewall policy: " + ex.Message);
         }
+        return false;
     }
 
-    private static string? ExecutePowerShellCommandWithOutput(string command)
+    private static void AddRule(string ruleName, int port, int direction)
     {
-        try { 
-        using (Process process = new Process())
+        try
         {
-            process.StartInfo.FileName = "powershell.exe";
-            process.StartInfo.Arguments = $"-Command \"{command}\"";
-            process.StartInfo.UseShellExecute = false;
-                if (Config.Debugging)
-                {
-                process.StartInfo.CreateNoWindow = false;
-                process.StartInfo.RedirectStandardError = false;
-                process.StartInfo.RedirectStandardOutput = false;
+            dynamic policy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+            dynamic rule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule"));
 
+            rule.Name = ruleName;
+            rule.Protocol = 6; // TCP
+            rule.LocalPorts = port.ToString();
+            rule.Direction = direction;
+            rule.Action = 1; // Allow
+            rule.Enabled = true;
 
-                }
-                else
-                {
-                process.StartInfo.CreateNoWindow = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.RedirectStandardOutput = true;
-                }
+            policy.Rules.Add(rule);
+        }
+        catch (COMException ex)
+        {
+            Console.WriteLine("Error adding firewall rule: " + ex.Message);
+        }
+    }
 
-                process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
+    private static void EnableRuleIfDisabled(string ruleName)
+    {
+        try
+        {
+            dynamic policy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+            foreach (dynamic rule in policy.Rules)
             {
-                watchdogHelper.Log($"Error: {process.StandardError.ReadToEnd()}");
-                return null; // Return null if there's an error
+                if (rule.Name == ruleName && !rule.Enabled)
+                {
+                    rule.Enabled = true;
+                }
             }
-
-            return output;
         }
-        }
-        catch (Exception ex)
+        catch (COMException ex)
         {
-            watchdogHelper.Log("Error: " + ex.Message);
-            return "";
+            Console.WriteLine("Error modifying firewall rule: " + ex.Message);
         }
     }
 
 
-        public static int? GetProcessIdByName(string processName)
+    public static int? GetProcessIdByName(string processName)
         {
         try
         {
