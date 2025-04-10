@@ -7,7 +7,7 @@ class Watchdog
 
         using (Mutex mutex = new Mutex(false, "Global\\" + Config.PrimaryWatchdogMutexName, out bool isNewInstance))
         {
-            watchdogHelper.EnsureHighestPriv(isNewInstance);
+            //watchdogHelper.EnsureHighestPriv(isNewInstance); CHANGE
 
             WatchdogLogic();
         }
