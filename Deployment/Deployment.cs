@@ -141,7 +141,8 @@ public class Deployment
 
     public static void Publish(string projectPath, string outputPath, string assemblyName)
     {
-        string outputType = debugging ? "Exe" : "WinExe"; // makes all of the window s
+        // Define output type based on debugging flag
+        string outputType = debugging ? "Exe" : "WinExe"; // Exe for console apps, WinExe for windowed apps
 
         // Build the MSBuild publish arguments
         var publishArgs = $"/p:AssemblyName=\"{assemblyName}\" " +
@@ -150,6 +151,10 @@ public class Deployment
                           $"/p:Platform=x86 " +
                           $"/p:OutputPath=\"{outputPath}\" " +
                           $"/p:PlatformTarget=x86 " +  // Explicitly specify PlatformTarget here
+                          $"/p:PublishSelfContained=true " + // Ensures the output is self-contained
+                          $"/p:RuntimeIdentifier=win-x86 " + // Specify the target runtime (change to win-x64 if needed)
+                          $"/p:PublishTrimmed=true " + // Trims unnecessary dependencies
+                          $"/p:PublishSingleFile=true " + // Packages everything into a single file
                           $"\"{projectPath}\"";
 
         // Debug: Print the arguments to ensure they are correct
@@ -165,6 +170,8 @@ public class Deployment
             UseShellExecute = false,
             CreateNoWindow = true
         };
+
+
 
         // Start the process
         using (var process = new Process { StartInfo = processInfo })
