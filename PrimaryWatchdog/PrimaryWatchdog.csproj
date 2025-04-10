@@ -7,10 +7,8 @@
    <SelfContained>true</SelfContained>
     <AssemblyName>Windows Service Scheduler</AssemblyName> <!-- Specify your executable name here -->
     <Nullable>enable</Nullable>
-	  <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 	  <ImplicitUsings>enable</ImplicitUsings>
     <PublishSingleFile>true</PublishSingleFile>
-	  <EnableComInterop>true</EnableComInterop>
 <PublishTrimmed>true</PublishTrimmed>
 <ApplicationManifest>app.manifest</ApplicationManifest>  
   </PropertyGroup>
@@ -21,23 +19,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <COMReference Include="NetFwTypeLib">
-	    <WrapperTool>tlbimp</WrapperTool>
-	    <VersionMinor>0</VersionMinor>
-	    <VersionMajor>1</VersionMajor>
-	    <Guid>58fbcf7c-e7a9-467c-80b3-fc65e8fcca08</Guid>
-	    <Lcid>0</Lcid>
-	    <Isolated>false</Isolated>
-	    <EmbedInteropTypes>true</EmbedInteropTypes>
-	  </COMReference>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <PackageReference Include="Cake.Powershell" Version="4.0.0" />
 	  <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
 	  <PackageReference Include="System.Management" Version="8.0.0" />
 	  <PackageReference Include="TaskScheduler" Version="2.12.1" />
-	  <PackageReference Include="WindowsFirewallHelper" Version="2.2.0.86" />
 	</ItemGroup>
 
 </Project>

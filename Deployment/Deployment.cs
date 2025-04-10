@@ -141,35 +141,58 @@ public class Deployment
 
     public static void Publish(string projectPath, string outputPath, string assemblyName)
     {
-        // Define output type based on debugging flag
-        string outputType = debugging ? "Exe" : "WinExe"; // Exe for console apps, WinExe for windowed apps
 
-        // Build the MSBuild publish arguments
-        var publishArgs = $"/p:AssemblyName=\"{assemblyName}\" " +
-                          $"/p:OutputType={outputType} " +
-                          $"/p:Configuration=Release " +
-                          $"/p:Platform=x86 " +
-                          $"/p:OutputPath=\"{outputPath}\" " +
-                          $"/p:PlatformTarget=x86 " +  // Explicitly specify PlatformTarget here
-                          $"/p:PublishSelfContained=true " + // Ensures the output is self-contained
-                          $"/p:RuntimeIdentifier=win-x86 " + // Specify the target runtime (change to win-x64 if needed)
-                          $"/p:PublishTrimmed=true " + // Trims unnecessary dependencies
-                          $"/p:PublishSingleFile=true " + // Packages everything into a single file
-                          $"\"{projectPath}\"";
+        string outputType = debugging ? "Exe" : "WinExe"; //makes all of the window s
+
+        // Build the dotnet publish arguments
+        var publishArgs = $"publish \"{projectPath}\" -o \"{outputPath}\" -p:AssemblyName=\"{assemblyName}\" -p:OutputType={outputType}";
 
         // Debug: Print the arguments to ensure they are correct
         Console.WriteLine($"Publish Arguments: {publishArgs}");
 
-        // Configure the process start info to use MSBuild
+        // Configure the process start info
         var processInfo = new ProcessStartInfo
         {
-            FileName = @"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe", // Adjust path as necessary
+            FileName = "dotnet",
             Arguments = publishArgs,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+
+        // Start the process
+        using (var process = new Process { StartInfo = processInfo })
+        {
+            try
+            {
+                process.Start();
+
+                // Read and display output
+                string output = process.StandardOutput.ReadToEnd();
+                string errors = process.StandardError.ReadToEnd();
+
+                process.WaitForExit();
+
+                Console.WriteLine("Output:");
+                Console.WriteLine(output);
+
+                if (!string.IsNullOrWhiteSpace(errors))
+                {
+                    Console.WriteLine("Errors:");
+                    Console.WriteLine(errors);
+                }
+
+                Console.WriteLine($"Publish process exited with code {process.ExitCode}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error starting process: {ex.Message}");
+            }
+        }
+    
+
+
 
 
 
