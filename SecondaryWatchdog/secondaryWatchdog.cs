@@ -19,7 +19,7 @@ namespace MonitorWatchdog
     {
         static void Main(string[] args)
         {
-            using (Mutex mutex = new Mutex(false, "Global\\" + Config.PrimaryWatchdogMutexName, out bool isNewInstance))
+            using (Mutex mutex = new Mutex(false, "Global\\" + Config.SecondaryWatchdogMutexName, out bool isNewInstance))
             {
                 watchdogHelper.EnsureHighestPriv(isNewInstance);
 
