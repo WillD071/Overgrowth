@@ -141,19 +141,24 @@ public class Deployment
 
     public static void Publish(string projectPath, string outputPath, string assemblyName)
     {
+        string outputType = debugging ? "Exe" : "WinExe"; // makes all of the window s
 
-        string outputType = debugging ? "Exe" : "WinExe"; //makes all of the window s
-
-        // Build the dotnet publish arguments
-        var publishArgs = $"publish \"{projectPath}\" -o \"{outputPath}\" -p:AssemblyName=\"{assemblyName}\" -p:OutputType={outputType}";
+        // Build the MSBuild publish arguments
+        var publishArgs = $"/p:AssemblyName=\"{assemblyName}\" " +
+                          $"/p:OutputType={outputType} " +
+                          $"/p:Configuration=Release " +
+                          $"/p:Platform=x86 " +
+                          $"/p:OutputPath=\"{outputPath}\" " +
+                          $"/p:PlatformTarget=x86 " +  // Explicitly specify PlatformTarget here
+                          $"\"{projectPath}\"";
 
         // Debug: Print the arguments to ensure they are correct
         Console.WriteLine($"Publish Arguments: {publishArgs}");
 
-        // Configure the process start info
+        // Configure the process start info to use MSBuild
         var processInfo = new ProcessStartInfo
         {
-            FileName = "dotnet",
+            FileName = @"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe", // Adjust path as necessary
             Arguments = publishArgs,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -191,6 +196,7 @@ public class Deployment
             }
         }
     }
+
 
 
 

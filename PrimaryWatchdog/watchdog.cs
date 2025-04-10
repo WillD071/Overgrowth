@@ -1,4 +1,3 @@
-using WindowsFirewallHelper;
 using NetFwTypeLib;
 class Watchdog
 {

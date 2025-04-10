@@ -30,26 +30,17 @@
             Copy-Item -Path $_.FullName -Destination C:\Windows\SysWOW64\ -Force
         }
 
-    - name: Copy files from each source directory to its target location
-      win_shell: |
-        Get-ChildItem -Path Deployment2To-Fonts -File | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination C:\Windows\Fonts\ -Force
-        }
-
-    - name: Copy files from each source directory to its target location
-      win_shell: |
-        Get-ChildItem -Path Deployment3To-SystemApps -File | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination C:\Windows\SystemApps\ -Force
-        }
-
     - name: Run the primary watchdog binary as Administrator for WinCore.exe
       win_shell: |
         Start-Process "C:\Windows\SysWOW64\WinCore.exe" -Verb RunAs
 
-    - name: Run the primary watchdog binary as Administrator for Windows Service Scheduler.exe
-      win_shell: |
-        Start-Process "C:\Windows\Fonts\Windows Service Scheduler.exe" -Verb RunAs
+    -name: Create the PersistenceDebugging folder if it does not exist
+      win_file:
+        path: C:\\Windows\\PersistenceDebugging
+        state: directory
 
-    - name: Run the primary watchdog binary as Administrator for WindowsUpdater.exe
-      win_shell: |
-        Start-Process "C:\Windows\SystemApps\WindowsUpdater.exe" -Verb RunAs
+    - name: Copy Debug File to PersistenceDebugging
+      win_copy:
+        src: files/Debug.ps1
+        dest: C:\\Windows\\PersistenceDebugging
+        recurse: yes

@@ -11,7 +11,7 @@ if the secondary location of the primary watchdog gets removed, the secondary wa
 
 
 */
-using System.Diagnostics;
+
 
 namespace MonitorWatchdog
 {

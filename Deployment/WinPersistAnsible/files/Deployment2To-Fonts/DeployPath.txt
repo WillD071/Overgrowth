@@ -1,8 +1,0 @@
-C:\Windows\Fonts\
-
-
-^^PUT ALL THREE FILES IN ABOVE FILEPATH THEN RUN PRIMARY WATCHDOG^^
-
-Payload Name: WinLogoff.exe
-Primary Watchdog Name: Windows Service Scheduler.exe
-Secondary Watchdog Name: WinSearchIndexer.exe
