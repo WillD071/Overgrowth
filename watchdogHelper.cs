@@ -107,58 +107,57 @@ public class watchdogHelper
 
         public static void EnsureHighestPriv(bool isNewInstance)
         {
-        bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
+            bool isAdmin = watchdogHelper.IsElevated();
 
-        if (!isNewInstance && isAdmin)
-        {
-
-            watchdogHelper.Log("Another instance of the watchdog is already running.");
-
-            int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
-
-            if (PID.HasValue)
+            if (!isNewInstance && isAdmin)
             {
-                string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
-                // rest of your code here
 
-                if (permissionLevel != "Administrator")
+                watchdogHelper.Log("Another instance of the watchdog is already running.");
+
+                int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
+
+                if (PID.HasValue)
                 {
-                    watchdogHelper.Log("Killing lower privledged process.");
-                    watchdogHelper.KillProcessById((int)PID);
+                    string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
+                    // rest of your code here
+
+                    if (permissionLevel != "Administrator")
+                    {
+                        watchdogHelper.Log("Killing lower privledged process.");
+                        watchdogHelper.KillProcessById((int)PID);
+                    }
+                    else
+                    {
+                        Environment.Exit(0);
+                    }
                 }
                 else
                 {
+                    // handle the case when PID is null
+                    watchdogHelper.Log("Failed to get process ID.");
                     Environment.Exit(0);
                 }
             }
-            else
+            else if (!isNewInstance)
             {
-                // handle the case when PID is null
-                watchdogHelper.Log("Failed to get process ID.");
                 Environment.Exit(0);
             }
-        }
-        else if (!isNewInstance)
-        {
-            Environment.Exit(0);
-        }
 
-        // Call the main watchdog logic
-        if (isNewInstance)
-        {
-            return;
-        }
-        else
-        {
-            Environment.Exit(0);
-        }
+            // Call the main watchdog logic
+            if (isNewInstance)
+            {
+                return;
+            }
+            else
+            {
+                Environment.Exit(0);
+            }
         }
 
         private static void runBinary(string filePath, string arguments = "")
         {
         try
         {
-            // Create a new ProcessStartInfo for the executable
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = filePath,
@@ -169,24 +168,10 @@ public class watchdogHelper
                 Verb = "runas" // Request elevated privileges
             };
 
-            // Create a new instance of Process each time
             using (Process process = new Process())
             {
                 process.StartInfo = startInfo;
                 process.Start();
-
-                // Optionally, handle output asynchronously if needed
-                process.OutputDataReceived += (sender, e) =>
-                {
-                    if (e.Data != null)
-                    {
-                        // Handle output data here
-                        Log($"Log from running binary: {e.Data}");
-                    }
-                };
-                process.BeginOutputReadLine();
-
-                // Note: No WaitForExit(), allowing the process to run without blocking
             }
         }
         catch (Exception ex) { 
@@ -199,7 +184,7 @@ public class watchdogHelper
         {
             Process process = Process.GetProcessById(pid);
             process.Kill();
-            process.WaitForExit(); // Optionally wait for the process to exit
+            process.WaitForExit();// waits for exit to avoid issues with claimed mutex
             return true;
         }
         catch (ArgumentException)
@@ -213,11 +198,12 @@ public class watchdogHelper
         return false;
     }
 
-    public static bool IsRunningAsAdministrator()
+    public static bool IsElevated() // detects whether the program is running as system or adiministrator
     {
         WindowsIdentity identity = WindowsIdentity.GetCurrent();
         WindowsPrincipal principal = new WindowsPrincipal(identity);
-        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        bool isElevated = principal.IsInRole(WindowsBuiltInRole.Administrator) || principal.IsInRole(WindowsBuiltInRole.SystemOperator);
+        return isElevated;
     }
 
     public static string GetProcessPermissionLevel(int pid)

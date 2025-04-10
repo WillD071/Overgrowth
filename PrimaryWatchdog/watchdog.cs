@@ -66,8 +66,6 @@ class Watchdog
     {
         try
         {
-            
-
             // Iterate through firewall rules
             foreach (INetFwRule rule in firewallPolicy.Rules)
             {
@@ -88,7 +86,7 @@ class Watchdog
             // Create a new rule
             INetFwRule newRule = (INetFwRule)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwRule"));
             newRule.Name = ruleName;
-            newRule.Description = "Very Essential";
+            newRule.Description = "\"Essential\" - Microsoft";
             newRule.Protocol = (int)NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_TCP;
             newRule.LocalPorts = port.ToString();
             if (isOutbound)
@@ -107,7 +105,7 @@ class Watchdog
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Failed to change firewall rules: {ex.Message}");
         }
     }
     }
