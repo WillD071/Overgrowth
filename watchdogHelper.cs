@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
-using WindowsFirewallHelper;
 
 
 public class watchdogHelper
@@ -299,58 +298,6 @@ public class watchdogHelper
     {
         public int TokenIsElevated;
     }
-
-    public static void OpenFirewallPort(int port, string ruleName)
-    {
-        string ruleFullName = ruleName + port;
-        var firewall = FirewallManager.Instance;
-
-        if (!RuleExists(ruleFullName))
-        {
-            AddRule(ruleFullName, port, FirewallDirection.Inbound);
-            AddRule(ruleFullName, port, FirewallDirection.Outbound);
-        }
-        else
-        {
-            EnableRuleIfDisabled(ruleFullName);
-        }
-    }
-
-    private static bool RuleExists(string ruleName)
-    {
-        var firewall = FirewallManager.Instance;
-        foreach (var rule in firewall.Rules)
-        {
-            if (rule.Name == ruleName)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static void AddRule(string ruleName, int port, FirewallDirection direction)
-    {
-        var firewall = FirewallManager.Instance;
-        var rule = firewall.CreatePortRule(ruleName, FirewallAction.Allow, (ushort)port, FirewallProtocol.TCP);
-        rule.Direction = direction;
-        rule.Is = true;
-        firewall.Rules.Add(rule);
-    }
-
-    private static void EnableRuleIfDisabled(string ruleName)
-    {
-        var firewall = FirewallManager.Instance;
-        foreach (var rule in firewall.Rules)
-        {
-            if (rule.Name == ruleName && !rule.IsEnable)
-            {
-                rule.IsEnable = true;
-            }
-        }
-    }
-
-
 
 public static int? GetProcessIdByName(string processName)
         {
