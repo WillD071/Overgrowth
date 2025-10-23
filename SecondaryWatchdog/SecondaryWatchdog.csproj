@@ -19,4 +19,8 @@
 		<Compile Include="..\Config.cs" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="WindowsFirewallHelper" Version="2.2.0.86" />
+	</ItemGroup>
+
 </Project>

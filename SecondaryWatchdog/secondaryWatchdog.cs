@@ -19,46 +19,11 @@ namespace MonitorWatchdog
     {
         static void Main(string[] args)
         {
-            bool isAdmin = watchdogHelper.IsRunningAsAdministrator();
-            watchdogHelper.Log("Current process is running with " + (isAdmin ? "Administrator" : "User") + " privileges.");
-
             using (Mutex mutex = new Mutex(false, "Global\\" + Config.SecondaryWatchdogMutexName, out bool isNewInstance))
             {
-                if (!isNewInstance && isAdmin)
-                {
-                    watchdogHelper.Log("Another instance of the watchdog is already running.");
+                watchdogHelper.EnsureHighestPriv(isNewInstance);
 
-                    int? PID = watchdogHelper.GetProcessIdByName(Process.GetCurrentProcess().ProcessName);
-
-                    if (PID.HasValue)
-                    {
-                        string permissionLevel = watchdogHelper.GetProcessPermissionLevel((int)PID);
-                        // rest of your code here
-
-                        if (permissionLevel != "Administrator")
-                        {
-                            watchdogHelper.Log("Killing lower privledged process.");
-                            watchdogHelper.KillProcessById((int)PID);
-                        }
-                        else
-                        {
-                            Environment.Exit(0);
-                        }
-                    }
-                    else
-                    {
-                        // handle the case when PID is null
-                        watchdogHelper.Log("Failed to get process ID.");
-                        Environment.Exit(0);
-                    }
-                }
-                else if (!isNewInstance)
-                {
-                    Environment.Exit(0);
-                }
-
-              
-                    WatchdogLogic();
+                WatchdogLogic();
             }
         }
 
