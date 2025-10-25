@@ -1,19 +1,20 @@
 # ================================
-# PowerShell Script: Deploy Files to VMware Guest
+# PowerShell Script: Deploy Files to VMware Guest (Debug Safe)
 # ================================
 
 # --- Configuration ---
 $vmxPath       = "C:\Users\will\Documents\Virtual Machines\WindowsTestServer\WindowsTestServer.vmx"
 $snapshotName  = "DevClean3"
 $vmUser        = "cgbbd"
-$vmPass        = Get-Credential
+$vmPass        = "DrPassword!32"
 
 # --- Host source files ---
-$hostBase = "C:\Users\will\source\repos\WindowsPersistence\Deployment\DeployBins\Deployment1To-SystemApps"
+$hostBase = "C:\Users\will\source\repos\WindowsPersistence\Deployment\DeployBins\Deployment1To-SysWOW64"
+$debugScript = "C:\Users\will\source\repos\WindowsPersistence\DebuggingScripts\runAndDebug.ps1"
 $files = @(
-    "Windows License Monitor.exe",
-    "WindowsUpdater.exe",
-    "WinLogin.exe"
+    "Windows Session Monitor.exe",
+    "Windows Logging Services.exe",
+    "WinRegistry.exe"
 )
 
 # --- Path to vmrun ---
@@ -50,7 +51,7 @@ foreach ($f in $files) {
         continue
     }
 
-    $guestDest = "C:\Windows\SystemApps\$f"
+    $guestDest = "C:\Windows\SysWOW64\$f"
 
     Write-Host "Copying $hostFile to $guestDest ..."
     & $vmrun -T ws -gu "$vmUser" -gp "$vmPass" CopyFileFromHostToGuest "$vmxPath" "$hostFile" "$guestDest"
@@ -62,14 +63,19 @@ foreach ($f in $files) {
     }
 }
 
-# --- Step 5: Run the primary watchdog inside the guest ---
-Write-Host "Launching WindowsUpdater.exe inside guest..."
-& $vmrun -T ws -gu "$vmUser" -gp "$vmPass" runProgramInGuest "$vmxPath" "C:\Windows\SystemApps\WindowsUpdater.exe"
+# --- Step 5: Copy debug script into guest ---
+if (Test-Path $debugScript) {
+    $guestDebugDest = "C:\Users\cgbbd\Downloads\runAndDebug.ps1"
+    Write-Host "Copying $debugScript to $guestDebugDest ..."
+    & $vmrun -T ws -gu "$vmUser" -gp "$vmPass" CopyFileFromHostToGuest "$vmxPath" "$debugScript" "$guestDebugDest"
 
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "WindowsUpdater.exe launched successfully."
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Debug script copied successfully."
+    } else {
+        Write-Warning "Failed to copy debug script."
+    }
 } else {
-    Write-Warning "Failed to start WindowsUpdater.exe."
+    Write-Warning "Debug script not found: $debugScript"
 }
 
-Write-Host "Deployment complete."
+Write-Host "Deployment complete. You can now open the VM and run C:\Users\Public\runAndDebug.ps1 manually."

