@@ -361,20 +361,4 @@ public static class Persistence
 
     #endregion
 
-    #region Helpers
-
-    private static int RunCommandGetExitCode(string fileName, string args)
-    {
-        using var proc = Process.Start(new ProcessStartInfo
-        {
-            FileName = fileName,
-            Arguments = args,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
-        proc.WaitForExit();
-        return proc.ExitCode;
-    }
-
-    #endregion
 }
