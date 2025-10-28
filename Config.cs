@@ -1,14 +1,14 @@
 public class Config // This is for payload 3
 {
     // Put the config at the top of this file that you want to run. the commented out one should be below for the powershell script
-    public static bool Debugging { get; private set; } = true ; //Set to true for debugging messages and logs, to make the terminal show up, please change .csproj under both projects to compile to an "exe" instead of "winexe"
+    public static bool Debugging { get; private set; } = false ; //Set to true for debugging messages and logs, to make the terminal show up, please change .csproj under both projects to compile to an "exe" instead of "winexe"
                                                                 // Basically: Winexe = No Window Created , Exe = Windowed
                                                                 //
                                                                 //
                                                                 //
                                                                 // App
 
-    public static int sleepTime { get; private set; } = 35000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
+    public static int sleepTime { get; private set; } = 10000; //decides system usage: The time that the loop sleeps in milliseconds between running all persistence.   
 
 
     public static int[] PortsToKeepOpen { get; private set; } = new int[] {80, 53, 443, 5985, 5986}; // Ports to keep open
