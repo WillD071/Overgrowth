@@ -32,7 +32,3 @@ by anyone in the future.
    Go to `Deployment\DeployBins` and copy ONLY the contents of each of those folders, *excluding the .txt file*, to the target machine. Then run the primary watchdog as labeled in DeployPath.txt in each deploy folder as administrator.
 
    ***RUN AS ADMINISTRATOR DO NOT FORGET***
-
-Ansible for deployment coming soon
-
-**Note:** CopyAndRunTool.ps1, TestIfRunning.ps1, and KillPersistence.ps1 are all scripts I made to make deployment and testing easier. They are hardcoded for everything so they would work with anything if you changed some filename and filepaths
