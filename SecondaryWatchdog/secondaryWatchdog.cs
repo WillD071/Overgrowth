@@ -32,7 +32,7 @@ namespace MonitorWatchdog
         static void WatchdogLogic()
         {
             //  loop for frequent checks
-            int SecondarySleep = Config.sleepTime + 5000;
+            int SecondarySleep = Config.sleepTime - 7000;
             while (true)
             {
 
