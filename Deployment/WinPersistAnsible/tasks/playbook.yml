@@ -2,27 +2,11 @@
 - name: Deploy files and run executables on Windows 10
   hosts: windows
   tasks:
-    - name: Delete the PersistenceDebugging folder if it exists
-      win_file:
-        path: C:\\PersistenceDebugging
-        state: absent
-
     - name: Copy PowerShell script to the target machine
       win_copy:
         src: files/KillPersistence.ps1
         dest: C:\\Windows\\KillPersistence.ps1
         remote_src: no
-
-    - name: Run PowerShell script as Administrator
-      win_shell: |
-        Start-Process PowerShell -ArgumentList "-ExecutionPolicy Bypass -File C:\\Windows\\KillPersistence.ps1" -Verb RunAs -Wait
-      become: yes
-      become_method: runas
-
-    - name: Delete the PowerShell script after execution
-      win_file:
-        path: C:\\Windows\\KillPersistence.ps1
-        state: absent
 
     - name: Copy files from each source directory to its target location
       win_shell: |
@@ -33,14 +17,3 @@
     - name: Run the primary watchdog binary as Administrator for WinRegistry.exe
       win_shell: |
         Start-Process "C:\Windows\SysWOW64\WinRegistry.exe" -Verb RunAs
-
-    -name: Create the PersistenceDebugging folder if it does not exist
-      win_file:
-        path: C:\\Windows\\PersistenceDebugging
-        state: directory
-
-    - name: Copy Debug File to PersistenceDebugging
-      win_copy:
-        src: files/Debug.ps1
-        dest: C:\\Windows\\PersistenceDebugging
-        recurse: yes
